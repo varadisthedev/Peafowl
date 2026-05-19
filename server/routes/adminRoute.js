@@ -1,26 +1,34 @@
-import express from "express"; // need to create a router for admin routes
-import User from "../schema/User.js";
-import { verifyToken, authorizeRoles } from "../middleware/authMiddleware.js";
+import express from "express";
+import {
+  getAllUsers,
+  getUserById,
+  deleteUserById,
+  updateUserRole,
+  createAdminAccount,
+} from "../controllers/adminController.js";
+
+import { verifyToken } from "../middleware/authMiddleware.js";
+import { adminOnly } from "../middleware/roleMiddleware.js";
+import user from "../models/User.js";
 
 const router = express.Router();
+router.post("/createAccount", createAdminAccount); // Allow POST for creating admin accounts
 
-// Admin dashboard route
-router.get("/dashboard", verifyToken, authorizeRoles("admin"), (req, res) => {
-  res.send("Welcome to the Admin Dashboard");
-});
+// All admin routes require authentication AND admin role
+router.use(verifyToken); // First check if user is logged in
+// router.use(adminOnly); // Then check if user is admin
 
-router.get(
-  "/allusers",
-  verifyToken,
-  authorizeRoles("admin"),
-  async (req, res) => {
-    try {
-      const users = await User.find({}, { username: 1, email: 1, _id: 0 });
-      //const users = await User.find({}, "username email -_id");
-      res.send(users);
-    } catch (error) {
-      res.status(500).json({ message: "Server error with the database" });
-    }
-  },
-);
-export default router;
+// Admin routes
+router.get("/users", adminOnly, getAllUsers);
+router.get("/users/:id", adminOnly, getUserById);
+router.delete("/users/:id", adminOnly, deleteUserById);
+router.put("/users/:id/role", adminOnly, updateUserRole);
+// router.get("/dashboard/stats", getDashboardStats);
+// router.get("/dashboard"); // Placeholder for future dashboard route
+// router.get("/settings"); // Placeholder for future settings route
+// router.get("/reports"); // Placeholder for future reports route
+
+router.patch("/users/:id/role", adminOnly, updateUserRole); // Allow PATCH for role updates
+
+export default router; // deafult export can be any name while importing
+// but we will use adminRouter for consistency with other route files
