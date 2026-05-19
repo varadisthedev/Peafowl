@@ -17,7 +17,6 @@ export const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Decoded token:", decoded); // Debugging log
     req.user = decoded;
     next();
   } catch (error) {
@@ -26,8 +25,10 @@ export const verifyToken = (req, res, next) => {
 };
 
 export const authorizeRoles = (...roles) => {
-  return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
+  //..roles is a rest parameters which will collect every arg and store in roles[]
+  return (req, res, next) => {  
+    if (!roles.includes(req.user.role)) {
+      // checks for user role in req
       return res
         .status(403)
         .json({ message: "Forbidden: Insufficient permissions." });

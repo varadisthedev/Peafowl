@@ -16,7 +16,7 @@ if (!process.env.REDIS_URL) {
   process.env.REDIS_URL = "redis://localhost:6379";
 }
 
-const redis = new Redis(process.env.REDIS_URL, {
+const redisClient = new Redis(process.env.REDIS_URL, {
   // If Redis is down, don't crash the app just log and move on
   lazyConnect: true, // gives app time to connect and not crash immediately at startup if Redis is unavailable
 
@@ -35,18 +35,18 @@ const redis = new Redis(process.env.REDIS_URL, {
   commandTimeout: 5000,
 });
 
-redis.on("connect", () => {
+redisClient.on("connect", () => {
   log(chalk.green("### Connected to Redis successfully!"));
 });
 
 // below logging is imp in prodduction, it doesnt crash reddis but logs errors
 // in short, they are event listeners
-redis.on("error", (err) => {
+redisClient.on("error", (err) => {
   log(chalk.red("### Redis error:"), err.message);
 });
 
-redis.on("reconnecting", () => {
+redisClient.on("reconnecting", () => {
   log(chalk.yellow("### Redis reconnecting..."));
 });
 
-export default redis;
+export default redisClient;
