@@ -1,24 +1,34 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import connectMongo from "./connectmongo.js";
-import userRoute from "./routes/userRoute.js";
-import adminRoute from "./routes/adminRoute.js";
+import connectMongo from "./config/connectToMongoDB.js";
 import cookieParser from "cookie-parser";
 import chalk from "chalk";
+import http from "http";
+import { Server } from "socket.io";
+
+import router from "./routes/index.js";
+import setupSocket from "./services/socket.js";
+
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
+console = console; // for chalk logging
 const log = console.log;
-import rateLimit from "express-rate-limit";
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
-// in ms: 15 minutes, max 5 requests per IP
 
-// Connect to MongoDB
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+  },
+});
+
+// Connect to db
 connectMongo();
 
 // middlware
 app.use(express.json());
+// CORS setup
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:5173",
@@ -26,19 +36,20 @@ app.use(
   }),
 );
 app.use(cookieParser());
-app.use("/api/users", limiter);
 
-app.use("/api/users", userRoute);
-app.use("/api/admin", adminRoute);
+// routes
+app.use(router);
 
-app.get("/", (req, res) => {
-  res.send("Welcome to the Express API");
-});
+// initialize socket handlers
+setupSocket(io);
 
-app.use((err, req, res, next) => {
-  const status = err.status || 500;
-  res.status(status).json({ message: err.message || "Server Error" });
-});
-app.listen(PORT, () => {
-  log(chalk.blue(`##Server is running on: http://localhost:${PORT}/`));
+// start server (use http server so Socket.IO attaches correctly)
+server.listen(PORT, () => {
+  console.clear();
+  console.log("=================================");
+  if (process.env.NODE_ENV === "development") {
+    log(chalk.blue(`[Server:DEV] running on: http://localhost:${PORT}/`));
+  } else {
+    log(chalk.blue(`[Server:PROD] production on port ${PORT}`));
+  }
 });
