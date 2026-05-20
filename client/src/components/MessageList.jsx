@@ -30,6 +30,8 @@ export default function MessageList({
         height: "400px",
         overflowY: "auto",
         marginBottom: "10px",
+        backgroundColor: "#e5e7eb",
+        color: "#111827",
       }}
     >
       <h3>[MESSAGE HISTORY]</h3>
@@ -43,7 +45,9 @@ export default function MessageList({
               marginBottom: "10px",
               padding: "8px",
               border: "1px solid #eee",
-              backgroundColor: msg.sender === currentUser ? "#f0f0f0" : "#fff",
+              backgroundColor:
+                msg.sender === currentUser ? "#d1d5db" : "#e5e7eb",
+              color: "#111827",
             }}
           >
             <strong>[{msg.sender}]</strong>{" "}
@@ -56,7 +60,13 @@ export default function MessageList({
                   <textarea
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
-                    style={{ width: "100%", marginTop: "5px" }}
+                    className="border-2 border-zinc-100"
+                    style={{
+                      width: "100%",
+                      marginTop: "5px",
+                      backgroundColor: "#d1d5db",
+                      color: "#111827",
+                    }}
                   />
                   <button onClick={() => handleEditSave(msg._id)}>
                     [SAVE EDIT]
