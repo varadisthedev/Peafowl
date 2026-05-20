@@ -1,8 +1,10 @@
 import { saveMessage } from "./messageService.js";
+import chalk from "chalk";
 
+const log = console.log;
 export default function setupSocket(io) {
   io.on("connection", (socket) => {
-    console.log("[Socket] connected:", socket.id);
+    log(chalk.greenBright("[Socket] connected to socketId:", socket.id));
 
     socket.on("join_room", ({ roomId, userId }) => {
       if (!roomId) return;
@@ -38,7 +40,7 @@ export default function setupSocket(io) {
           isEdited: savedMessage.isEdited,
         });
       } catch (error) {
-        console.error("[Socket] Error saving message:", error);
+        log(chalk.redBright("[Socket] Error saving message:", error));
         socket.emit("message_error", { error: "Failed to save message" });
       }
     });
@@ -49,7 +51,7 @@ export default function setupSocket(io) {
     });
 
     socket.on("disconnect", (reason) => {
-      console.log("[Socket] disconnected:", socket.id, reason);
+      log(chalk.redBright("[Socket] disconnected:", socket.id, reason));
     });
   });
 }
