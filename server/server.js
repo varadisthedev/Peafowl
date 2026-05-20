@@ -16,10 +16,11 @@ const PORT = process.env.PORT || 3000;
 console = console; // for chalk logging
 const log = console.log;
 
-const server = http.createServer(app);
+const server = http.createServer(app); // wrapping express app in http server for Socket.io
 const io = new Server(server, {
   cors: {
     origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
   },
 });
 
@@ -29,6 +30,13 @@ connectMongo();
 // middlware
 app.use(express.json());
 // CORS setup
+// app.use(
+//   cors({
+//     origin: process.env.CLIENT_URL || "http://localhost:5173",
+//     credentials: true,
+//   }),
+// );
+
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:5173",
@@ -43,7 +51,7 @@ app.use(router);
 // initialize socket handlers
 setupSocket(io);
 
-// start server (use http server so Socket.IO attaches correctly)
+// start server (using http server so Socket.IO attaches correctly)
 server.listen(PORT, () => {
   console.clear();
   console.log("=================================");
