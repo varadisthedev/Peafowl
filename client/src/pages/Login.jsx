@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { authAPI } from "../services/api";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
 
-export default function Login({ onLoginSuccess }) {
+export default function Login({ onLoginSuccess, onSwitchToRegister }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -39,38 +47,55 @@ export default function Login({ onLoginSuccess }) {
   };
 
   return (
-    <div style={{ padding: "20px" }} className="border-2 border-black">
-      <h1 className="text-black font-extrabold ">Login</h1>
-      <form onSubmit={handleLogin}>
-        <div>
-          <label>Email: </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Password: </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
-        <button
-          type="button"
-          onClick={() => (window.location.href = "/register")}
-        >
-          Register
-        </button>
-      </form>
-      {error && <p style={{ color: "red" }}>[ERROR] {error}</p>}
+    <div className="mx-auto flex min-h-screen w-full max-w-md items-center px-4">
+      <Card className="w-full bg-zinc-900 text-zinc-100 ring-zinc-800">
+        <CardHeader>
+          <CardTitle>Login</CardTitle>
+          <p className="text-xs text-zinc-400">
+            [REQUEST] POST /api/users/login
+          </p>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin} className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-xs text-zinc-300">Email</label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="bg-zinc-800 text-zinc-100"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-zinc-300">Password</label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="bg-zinc-800 text-zinc-100"
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button type="submit" disabled={loading} className="flex-1">
+                {loading ? "Logging in..." : "Login"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onSwitchToRegister}
+                className="flex-1"
+              >
+                Register
+              </Button>
+            </div>
+          </form>
+          {error && (
+            <p className="mt-3 text-xs text-red-400">[ERROR] {error}</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

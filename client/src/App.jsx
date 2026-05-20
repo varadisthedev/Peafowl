@@ -31,11 +31,13 @@ export default function App() {
 
   const handleLogout = () => {
     console.log("[App] Logging out");
+    // removing token from local storage to prevent unauthorized access
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
-    setPage("login");
+
     disconnectSocket();
+    setPage("login");
   };
 
   const handleSwitchToRegister = () => {
@@ -49,9 +51,31 @@ export default function App() {
   };
 
   return (
-    <>
-      <Login />
-      <Register />
-    </>
+    <div className="min-h-screen min-w-screen bg-zinc-950 text-zinc-100">
+      {page === "register" && (
+        <div>
+          <Register />
+          <div className="mx-auto max-w-md px-4 pb-8 text-center text-sm text-zinc-400">
+            Already have an account?{" "}
+            <button
+              type="button"
+              className="text-zinc-100 underline"
+              onClick={handleSwitchToLogin}
+            >
+              Login
+            </button>
+          </div>
+        </div>
+      )}
+
+      {page === "login" && (
+        <Login
+          onLoginSuccess={handleLoginSuccess}
+          onSwitchToRegister={handleSwitchToRegister}
+        />
+      )}
+
+      {page === "chat" && user && <Chat user={user} onLogout={handleLogout} />}
+    </div>
   );
 }

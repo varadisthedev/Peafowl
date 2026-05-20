@@ -57,7 +57,12 @@ export default function Register() {
             required
           />
         </div>
-        <button type="submit">Register</button>
+        <button
+          type="submit"
+          className="border-2 border-zinc-100 p-2 rounded-md"
+        >
+          Register
+        </button>
       </form>
       {error && <p style={{ color: "red" }}>[ERROR] {error}</p>}
       {success && <p style={{ color: "green" }}>[SUCCESS] {success}</p>}

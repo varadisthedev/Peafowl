@@ -4,6 +4,11 @@ const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
 
 let socket = null;
 
+const withSocket = (fn) => {
+  if (!socket) return;
+  fn();
+};
+
 export const connectSocket = () => {
   if (socket) return socket;
 
@@ -39,7 +44,7 @@ export const socketEvents = {
     console.log(
       `[Socket Event] Emit join_room: roomId=${roomId}, userId=${userId}`,
     );
-    socket.emit("join_room", { roomId, userId });
+    withSocket(() => socket.emit("join_room", { roomId, userId }));
   },
 
   // Leave room
@@ -47,7 +52,7 @@ export const socketEvents = {
     console.log(
       `[Socket Event] Emit leave_room: roomId=${roomId}, userId=${userId}`,
     );
-    socket.emit("leave_room", { roomId, userId });
+    withSocket(() => socket.emit("leave_room", { roomId, userId }));
   },
 
   // Send message
@@ -55,7 +60,7 @@ export const socketEvents = {
     console.log(
       `[Socket Event] Emit send_message: roomId=${roomId}, sender=${sender}, content="${content}"`,
     );
-    socket.emit("send_message", { roomId, sender, content });
+    withSocket(() => socket.emit("send_message", { roomId, sender, content }));
   },
 
   // Typing indicator
@@ -63,48 +68,56 @@ export const socketEvents = {
     console.log(
       `[Socket Event] Emit typing: roomId=${roomId}, userId=${userId}, isTyping=${isTyping}`,
     );
-    socket.emit("typing", { roomId, userId, isTyping });
+    withSocket(() => socket.emit("typing", { roomId, userId, isTyping }));
   },
 
   // Listen for message received
   onReceiveMessage: (callback) => {
     console.log("[Socket Listener] Listening for receive_message");
-    socket.on("receive_message", (msg) => {
-      console.log("[Socket Event] Received receive_message:", msg);
-      callback(msg);
-    });
+    withSocket(() =>
+      socket.on("receive_message", (msg) => {
+        console.log("[Socket Event] Received receive_message:", msg);
+        callback(msg);
+      }),
+    );
   },
 
   // Listen for user joined
   onUserJoined: (callback) => {
     console.log("[Socket Listener] Listening for user_joined");
-    socket.on("user_joined", (data) => {
-      console.log("[Socket Event] Received user_joined:", data);
-      callback(data);
-    });
+    withSocket(() =>
+      socket.on("user_joined", (data) => {
+        console.log("[Socket Event] Received user_joined:", data);
+        callback(data);
+      }),
+    );
   },
 
   // Listen for user left
   onUserLeft: (callback) => {
     console.log("[Socket Listener] Listening for user_left");
-    socket.on("user_left", (data) => {
-      console.log("[Socket Event] Received user_left:", data);
-      callback(data);
-    });
+    withSocket(() =>
+      socket.on("user_left", (data) => {
+        console.log("[Socket Event] Received user_left:", data);
+        callback(data);
+      }),
+    );
   },
 
   // Listen for typing
   onTyping: (callback) => {
     console.log("[Socket Listener] Listening for typing");
-    socket.on("typing", (data) => {
-      console.log("[Socket Event] Received typing:", data);
-      callback(data);
-    });
+    withSocket(() =>
+      socket.on("typing", (data) => {
+        console.log("[Socket Event] Received typing:", data);
+        callback(data);
+      }),
+    );
   },
 
   // Remove listener
   off: (event) => {
     console.log(`[Socket] Removing listener for ${event}`);
-    socket.off(event);
+    withSocket(() => socket.off(event));
   },
 };
