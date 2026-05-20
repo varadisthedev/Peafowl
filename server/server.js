@@ -56,8 +56,8 @@ server.listen(PORT, () => {
   console.clear();
   console.log("=================================");
   if (process.env.NODE_ENV === "development") {
-    log(chalk.blue(`[Server:DEV] running on: http://localhost:${PORT}/`));
+    log(chalk.blue(`[Server: DEV] running on: http://localhost:${PORT}/`));
   } else {
-    log(chalk.blue(`[Server:PROD] production on port ${PORT}`));
+    log(chalk.blue(`[Server: PROD] production on port ${PORT}`));
   }
 });
