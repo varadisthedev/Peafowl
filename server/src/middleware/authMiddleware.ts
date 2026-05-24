@@ -26,7 +26,7 @@ export const verifyToken = (req, res, next) => {
 
 export const authorizeRoles = (...roles) => {
   //..roles is a rest parameters which will collect every arg and store in roles[]
-  return (req, res, next) => {  
+  return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       // checks for user role in req
       return res

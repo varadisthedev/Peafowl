@@ -7,11 +7,13 @@ Built using the MERN stack with Socket.IO and Redis, the project focuses on scal
 ## Tech Stack
 
 ### Frontend
+
 - React
 - Vite
 - Socket.IO Client
 
 ### Backend
+
 - Node.js
 - Express.js
 - Socket.IO

@@ -1,15 +1,19 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import connectMongo from "./config/connectToMongoDB.js";
+import connectMongo from "./config/connectToMongoDB";
 import cookieParser from "cookie-parser";
 import chalk from "chalk";
 import http from "http";
 import { Server } from "socket.io";
 
-import router from "./routes/index.js";
-import setupSocket from "./services/socket.js";
+import router from "./routes/index";
+import setupSocket from "./services/socket";
 
+// logger setup 
+import morgan from "morgan";
+import logger from "./config/logger";
+logger.stream = {
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;

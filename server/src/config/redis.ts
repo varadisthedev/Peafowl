@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import chalk from "chalk";
 
 const log = console.log;
+
 dotenv.config();
 
 if (!process.env.REDIS_URL) {
@@ -49,4 +50,5 @@ redisClient.on("reconnecting", () => {
   log(chalk.yellow("### Redis reconnecting..."));
 });
 
+export { redisClient };
 export default redisClient;
