@@ -5,8 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server.js"
+    "dev": "nodemon --exec tsx src/index.ts",
+    "build": "tsc",
+    "start": "node --experimental-specifier-resolution=node dist/index.js"
   },
   "keywords": [],
   "author": "",
@@ -23,12 +24,20 @@
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.6.2",
+    "morgan": "^1.10.1",
     "multer": "^2.1.1",
     "rate-limit-redis": "^5.0.0",
     "redis": "^5.12.1",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.1",
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
   }
 }
