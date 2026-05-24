@@ -1,0 +1,36 @@
+# deps - will be reinstalled inside container via npm install
+node_modules
+
+# git stuff
+.git
+.gitignore
+
+# logs
+logs
+*.log
+npm-debug.log*
+
+# env files - secrets shouldn't go into image
+.env
+.env.*
+
+# docker files themselves
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# build output (if TS project)
+dist
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# editor config
+.vscode
+.idea
+
+# test files (optional, keeps image lean)s
+**/*.test.js
+**/*.spec.js
+coverage
