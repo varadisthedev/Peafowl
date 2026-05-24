@@ -13,11 +13,10 @@ import setupSocket from "./services/socket";
 // logger setup 
 import morgan from "morgan";
 import logger from "./config/logger";
-logger.stream = {
+
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
-console = console; // for chalk logging
 const log = console.log;
 
 const server = http.createServer(app); // wrapping express app in http server for Socket.io
