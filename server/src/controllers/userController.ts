@@ -1,7 +1,7 @@
+import type { Request, Response, CookieOptions } from "express";
 import userModel from "../models/User";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { verifyToken } from "../middleware/authMiddleware";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -12,24 +12,38 @@ if (!process.env.NODE_ENV) {
 
 // Cookie settings for JWT auth for register route and login route,
 //  also used in logout route to clear cookie
-const baseCookieOptions = {
+const baseCookieOptions: CookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax",
 };
 
-const cookieOptions = {
+const cookieOptions: CookieOptions = {
   ...baseCookieOptions,
   maxAge: 60 * 60 * 1000,
 };
 
-export const register = async (req, res) => {
-  const { username, email, password } = req.body;
+export const register = async (req: Request, res: Response) => {
+  const { username, email, password } = req.body as {
+    username?: string;
+    email?: string;
+    password?: string;
+  };
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: "username, email and password are required" });
+  }
+
   try {
-    const existingUser = await userModel.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+    const existingByEmail = await userModel.findOne({ email });
+    if (existingByEmail) {
+      return res.status(400).json({ message: "Email already exists" });
     }
+    const existingByUsername = await userModel.findOne({ username });
+    if (existingByUsername) {
+      return res.status(400).json({ message: "Username already exists" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new userModel({
       username,
@@ -46,15 +60,22 @@ export const register = async (req, res) => {
         role: newUser.role,
       },
     });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", err: error.message });
+  } catch (error: any) {
+    if (error?.code === 11000) {
+      const key = error.keyValue ? Object.keys(error.keyValue)[0] : "field";
+      return res.status(409).json({ message: `${key} already exists` });
+    }
+    res.status(500).json({ message: "Server error", err: error?.message });
   }
 };
 
-export const login = async (req, res) => {
-  const { email, password } = req.body;
+export const login = async (req: Request, res: Response) => {
+  const { email, password } = req.body as { email?: string; password?: string };
+  if (!email || !password) {
+    return res.status(400).json({ message: "email and password are required" });
+  }
   try {
-    const user = await userModel.findOne({ email });
+    const user = await userModel.findOne({ email }).select("+password");
     if (!user) {
       return res
         .status(400)
@@ -79,20 +100,14 @@ export const login = async (req, res) => {
 
     res.status(200).json({
       message: "Login successful",
-      token: token, // Include the token in the response
-      //   user: {
-      //     id: user._id,
-      //     username: user.username,
-      //     email: user.email,
-      //     role: user.role,
-      //   },
+      token: token,
     });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
+  } catch (error: any) {
+    res.status(500).json({ message: "Server error", err: error?.message });
   }
 };
 
-export const logout = (req, res) => {
+export const logout = (req: Request, res: Response) => {
   // clear auth cookie during logout
   try {
     res.clearCookie("token", baseCookieOptions);
@@ -103,7 +118,7 @@ export const logout = (req, res) => {
   }
 };
 
-export const getProfile = async (req, res) => {
+export const getProfile = async (req: Request, res: Response) => {
   try {
     const user = await userModel.findById(req.user.userId).select("-password");
     if (!user) {
@@ -115,16 +130,38 @@ export const getProfile = async (req, res) => {
   }
 };
 
-export const updateMail = async (req, res) => {
+export const updateMail = async (req: Request, res: Response) => {
   try {
-    const { email } = req.body;
+    // chek if user exits 
+    // check if new mail already exists
+    // check if current mail matches the one in db
+    // check if new mail is valid format (regex)
+    // check if new mail is same as current mail
+    // if all checks pass, update mail and save user
+
+    const { currentMail, newMail } = req.body as { currentMail?: string; newMail?: string };
+    if (!currentMail || !newMail) {
+      return res.status(400).json({ message: "currentMail and newMail are required" });
+    }
     const user = await userModel.findById(req.user.userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found in db" });
     }
-    if (email) user.email = email;
-
+    if (user.email !== currentMail) {
+      return res.status(400).json({ message: "currentMail does not match our records" });
+    }
+    if (currentMail === newMail) {
+      return res.status(400).json({ message: "newMail cannot be the same as currentMail" });
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newMail)) {
+      return res.status(400).json({ message: "newMail is not a valid email format" });
+    }
+    if (await userModel.findOne({ email: newMail })) {
+      return res.status(400).json({ message: "newMail already exists" });
+    }
+    user.email = newMail;
     await user.save();
     res.status(200).json(user);
   } catch (err) {
@@ -132,12 +169,3 @@ export const updateMail = async (req, res) => {
   }
 };
 
-export const userRouteCheck = (req, res) => {
-  try {
-    res.status(200).json({ message: "user route is working" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", err: err.message });
-  }
-};
-
-export default userRouteCheck;
