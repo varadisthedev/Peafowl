@@ -1,18 +1,17 @@
-[]create a sample env for backend 
-[]setup basic frotnend with react router 
-[]create login page with shadcn card and dialog elements
-[]connect frotnend to backend using axios 
+redis locally 
+docker run -p 6379:6379 redis
+
+get fimilar with:
+SET
+GET
+INCR
+EXPIRE
+ZADD
+ZRANGE
+ZREMRANGEBYSCORE
 
 
-my-project/
-├── models/           # Database models (Schema + Model combined)
-│   └── User.js       # Defines the schema and creates the model
-├── controllers/      # Business logic (handles requests/responses)
-│   └── userController.js
-├── routes/           # API endpoint definitions
-│   └── userRoutes.js
-├── middleware/       # Auth, validation, error handling
-├── config/           # Database connection and env vars
-│   └── db.js
-├── .env
-└── server.js         # App entry point
+try out :
+counter app
+online users count
+request counter
