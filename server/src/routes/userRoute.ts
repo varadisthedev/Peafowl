@@ -4,15 +4,17 @@ import {
   login,
   getProfile,
   updateMail,
+  TestRateLimit,
 } from "../controllers/userController";
 import { verifyToken } from "../middleware/authMiddleware";
-import user from "../models/User";
+
 
 const router = express.Router();
 
 // Public routes (no authentication needed)
 router.post("/register", register);
 router.post("/login", login);
+router.get("/testRateLimit", TestRateLimit);
 
 // Protected routes (authentication required)
 router.get("/profile", verifyToken, getProfile);
