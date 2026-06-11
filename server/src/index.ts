@@ -10,14 +10,18 @@ import { Server } from "socket.io";
 import router from "./routes/index";
 import setupSocket from "./services/socket";
 
-// logger setup 
-import morgan from "morgan";
-import logger from "./config/logger";
-
+// adding redis rate limit 
+import RedisRateLimiter from "./middleware/redisRateLimiter";
+import { logger } from "./middleware/customLogger";
+import { execSync } from "child_process"
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const log = console.log;
+
+// to allow express to trust the proxy (like nginx, railway ,render)
+app.set("trust proxy", true);
+
 
 const server = http.createServer(app); // wrapping express app in http server for Socket.io
 const io = new Server(server, {
@@ -31,14 +35,10 @@ const io = new Server(server, {
 connectMongo();
 
 // middlware
+app.use(logger);
 app.use(express.json());
-// CORS setup
-// app.use(
-//   cors({
-//     origin: process.env.CLIENT_URL || "http://localhost:5173",
-//     credentials: true,
-//   }),
-// );
+const apiLimiter = RedisRateLimiter({ windowMs: 15 * 60 * 1000, max: 100 });
+app.use("/api", apiLimiter);
 
 app.use(
   cors({
@@ -59,6 +59,7 @@ server.listen(PORT, () => {
   console.clear();
   console.log("=================================");
   if (process.env.NODE_ENV === "development") {
+
     log(chalk.blue(`[Server: DEV] running on: http://localhost:${PORT}/`));
   } else {
     log(chalk.blue(`[Server: PROD] production on port ${PORT}`));
