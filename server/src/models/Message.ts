@@ -2,13 +2,14 @@ import mongoose from "mongoose";
 
 const MessageSchema = new mongoose.Schema(
   {
+
     roomId: {
       type: String,
       required: true,
       index: true,
     },
     sender: {
-      type: String, // userId or username
+      type: mongoose.Schema.Types.ObjectId, // userId 
       required: true,
     },
     content: {
@@ -17,7 +18,7 @@ const MessageSchema = new mongoose.Schema(
     },
     timestamp: {
       type: Date,
-      default: Date.now,
+      default: Date.now,  
       index: true,
     },
     isEdited: {
