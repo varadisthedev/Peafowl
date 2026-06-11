@@ -1,3 +1,4 @@
+import type { Request, Response } from "express";
 import Message from "../models/Message";
 
 export const saveMessage = async (messageData) => {
@@ -37,15 +38,23 @@ export const getMessagesByRoom = async (req, res) => {
 export const deleteMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
+    const message = await Message.findById(messageId);
 
-    const deletedMessage = await Message.findByIdAndDelete(messageId);
 
-    if (!deletedMessage) {
+    if (!message) {
       return res
         .status(404)
         .json({ success: false, message: "Message not found" });
     }
 
+    if (message.sender.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to delete this message",
+      });
+    }
+
+    await message.deleteOne();
     return res.status(200).json({
       success: true,
       message: "Message deleted successfully",
@@ -89,6 +98,49 @@ export const editMessage = async (req, res) => {
     });
   } catch (error) {
     console.error("[MessageController] Error editing message:", error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+export const pinMessage = async (req: Request, res: Response) => {
+  try {
+    const { messageId } = req.params;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const message = await Message.findById(messageId);
+
+    if (!message) {
+      return res.status(404).json({
+        success: false,
+        message: "Message not found",
+      });
+    }
+
+    if (message.sender.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to pin this message",
+      });
+    }
+
+    message.isPinned = true;
+    message.pinnedAt = new Date();
+    await message.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Message pinned successfully",
+      pinnedMessage: message,
+    });
+  } catch (error) {
+    console.error("[MessageController] Error pinning message:", error);
     return res.status(500).json({ success: false, error: error.message });
   }
 };

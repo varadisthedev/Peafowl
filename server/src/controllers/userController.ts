@@ -22,7 +22,9 @@ const cookieOptions: CookieOptions = {
   ...baseCookieOptions,
   maxAge: 60 * 60 * 1000,
 };
-
+export const TestRateLimit = async (req: Request, res: Response) => {
+  res.status(200).json({ message: "Rate limit test successful" });
+};
 export const register = async (req: Request, res: Response) => {
   const { username, email, password } = req.body as {
     username?: string;
