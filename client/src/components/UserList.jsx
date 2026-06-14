@@ -1,4 +1,4 @@
-export default function UserList({ users, typingUsers }) {
+export default function UserList({ users, typingUsers, currentUserId }) {
   return (
     <div
       style={{
@@ -15,7 +15,13 @@ export default function UserList({ users, typingUsers }) {
           {users.map((user) => (
             <li key={user}>
               {user}
-              {typingUsers[user] && <span> [TYPING...]</span>}
+              {user === currentUserId && <span> (you)</span>}
+              {typingUsers[user] && user !== currentUserId && (
+                <span style={{ color: "#6b7280", fontStyle: "italic" }}>
+                  {" "}
+                  · typing…
+                </span>
+              )}
             </li>
           ))}
         </ul>

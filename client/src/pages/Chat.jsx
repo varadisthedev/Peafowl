@@ -5,6 +5,7 @@ import MessageList from "../components/MessageList";
 import MessageInput from "../components/MessageInput";
 import RoomSelector from "../components/RoomSelector";
 import UserList from "../components/UserList";
+import TypingIndicator from "../components/TypingIndicator";
 
 export default function Chat({ user, onLogout }) {
   const [roomId, setRoomId] = useState("");
@@ -41,17 +42,29 @@ export default function Chat({ user, onLogout }) {
     const handleUserLeft = (data) => {
       console.log("[Chat] User left:", data);
       setUsersInRoom((prev) => prev.filter((u) => u !== data.userId));
+      setTypingUsers((prev) => {
+        const next = { ...prev };
+        delete next[data.userId];
+        return next;
+      });
     };
     socketEvents.onUserLeft(handleUserLeft);
 
-    // Listen for typing
-    const handleTyping = (data) => {
-      setTypingUsers((prev) => ({
-        ...prev,
-        [data.userId]: data.isTyping,
-      }));
+    // Listen for typing_status (room-scoped via Redis pub/sub)
+    const handleTypingStatus = (data) => {
+      if (data.roomId && data.roomId !== roomId) return;
+
+      setTypingUsers((prev) => {
+        const next = { ...prev };
+        if (data.isTyping) {
+          next[data.userId] = true;
+        } else {
+          delete next[data.userId];
+        }
+        return next;
+      });
     };
-    socketEvents.onTyping(handleTyping);
+    socketEvents.onTypingStatus(handleTypingStatus);
 
     // Fetch message history
     fetchMessageHistory();
@@ -60,7 +73,7 @@ export default function Chat({ user, onLogout }) {
       socketEvents.off("receive_message");
       socketEvents.off("user_joined");
       socketEvents.off("user_left");
-      socketEvents.off("typing");
+      socketEvents.off("typing_status");
     };
   }, [roomId, user]);
 
@@ -168,7 +181,11 @@ export default function Chat({ user, onLogout }) {
             </div>
 
             {/* Users in Room */}
-            <UserList users={usersInRoom} typingUsers={typingUsers} />
+            <UserList
+              users={usersInRoom}
+              typingUsers={typingUsers}
+              currentUserId={user.userId}
+            />
 
             {/* Messages */}
             {loading ? (
@@ -181,6 +198,12 @@ export default function Chat({ user, onLogout }) {
                 onEditMessage={handleEditMessage}
               />
             )}
+
+            {/* Typing indicator */}
+            <TypingIndicator
+              typingUsers={typingUsers}
+              currentUserId={user.userId}
+            />
 
             {/* Message Input */}
             <MessageInput

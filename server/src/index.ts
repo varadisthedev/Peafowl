@@ -9,6 +9,8 @@ import { Server } from "socket.io";
 
 import router from "./routes/index";
 import setupSocket from "./services/socket";
+import { setupSwagger } from "./swagger/index";
+import { initChatSubscriber } from "./pubsub/index";
 
 // adding redis rate limit 
 import RedisRateLimiter from "./middleware/redisRateLimiter";
@@ -48,10 +50,19 @@ app.use(
 );
 app.use(cookieParser());
 
+// API documentation (Swagger UI at /api-docs)
+setupSwagger(app);
+
 // routes
 app.use(router);
 
-// initialize socket handlers
+// Redis pub/sub: subscribe before socket handlers so broadcasts are ready
+const pubSubReady = await initChatSubscriber(io);
+if (!pubSubReady) {
+  log(chalk.yellow("[Server] Running without Redis pub/sub — using local socket fallback"));
+}
+
+// initialize socket handlers (publish events via Redis pub/sub)
 setupSocket(io);
 
 // start server (using http server so Socket.IO attaches correctly)
@@ -61,6 +72,7 @@ server.listen(PORT, () => {
   if (process.env.NODE_ENV === "development") {
 
     log(chalk.blue(`[Server: DEV] running on: http://localhost:${PORT}/`));
+    log(chalk.blue(`[Server: DEV] API docs: http://localhost:${PORT}/api-docs`));
   } else {
     log(chalk.blue(`[Server: PROD] production on port ${PORT}`));
   }

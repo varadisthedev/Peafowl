@@ -104,15 +104,20 @@ export const socketEvents = {
     );
   },
 
-  // Listen for typing
-  onTyping: (callback) => {
-    console.log("[Socket Listener] Listening for typing");
+  // Listen for typing status (room-scoped, excludes self on server)
+  onTypingStatus: (callback) => {
+    console.log("[Socket Listener] Listening for typing_status");
     withSocket(() =>
-      socket.on("typing", (data) => {
-        console.log("[Socket Event] Received typing:", data);
+      socket.on("typing_status", (data) => {
+        console.log("[Socket Event] Received typing_status:", data);
         callback(data);
       }),
     );
+  },
+
+  // @deprecated — use onTypingStatus; kept for backward compatibility
+  onTyping: (callback) => {
+    socketEvents.onTypingStatus(callback);
   },
 
   // Remove listener
