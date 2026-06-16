@@ -4,68 +4,73 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Chat from "./pages/Chat";
 
+/**
+ * Root Application Component
+ * Manages global authentication state and page routing.
+ * Root of the sleek black-and-white chat application.
+ */
 export default function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState("login"); // "register", "login", or "chat"
 
+  // Check for existing session on mount
   useEffect(() => {
-    // Check if user is already logged in
     const token = localStorage.getItem("token");
     const savedUser = localStorage.getItem("user");
 
     if (token && savedUser) {
-      console.log("[App] User already logged in");
-      setUser(JSON.parse(savedUser));
-      setPage("chat");
-      connectSocket();
+      console.log("[App] Session found, reconnecting...");
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        setPage("chat");
+        connectSocket();
+      } catch (err) {
+        console.error("[App] Error parsing saved user session:", err);
+        handleLogout(); // Clear corrupted session
+      }
+    } else {
+      console.log("[App] No active session found.");
     }
   }, []);
 
+  /**
+   * Handles successful login/registration by updating state and starting socket connection.
+   */
   const handleLoginSuccess = (userData) => {
-    console.log("[App] Login successful, user:", userData);
+    console.log("[App] Authentication successful for:", userData.username);
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
     setPage("chat");
     connectSocket();
   };
 
+  /**
+   * Logs out the user and cleans up local storage and socket connections.
+   */
   const handleLogout = () => {
-    console.log("[App] Logging out");
-    // removing token from local storage to prevent unauthorized access
+    console.log("[App] Terminating session and logging out");
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
-
     disconnectSocket();
     setPage("login");
   };
 
   const handleSwitchToRegister = () => {
-    console.log("[App] Switching to register page");
+    console.log("[App] Navigating to Register");
     setPage("register");
   };
 
   const handleSwitchToLogin = () => {
-    console.log("[App] Switching to login page");
+    console.log("[App] Navigating to Login");
     setPage("login");
   };
 
   return (
-    <div className="min-h-screen min-w-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground dark">
       {page === "register" && (
-        <div>
-          <Register />
-          <div className="mx-auto max-w-md px-4 pb-8 text-center text-sm text-zinc-400">
-            Already have an account?{" "}
-            <button
-              type="button"
-              className="text-zinc-100 underline"
-              onClick={handleSwitchToLogin}
-            >
-              Login
-            </button>
-          </div>
-        </div>
+        <Register onSwitchToLogin={handleSwitchToLogin} />
       )}
 
       {page === "login" && (
@@ -75,7 +80,9 @@ export default function App() {
         />
       )}
 
-      {page === "chat" && user && <Chat user={user} onLogout={handleLogout} />}
+      {page === "chat" && user && (
+        <Chat user={user} onLogout={handleLogout} />
+      )}
     </div>
   );
 }

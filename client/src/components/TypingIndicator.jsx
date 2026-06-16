@@ -1,13 +1,16 @@
 /**
- * Animated typing indicator shown below the message list.
- * Displays who is currently typing in the active room.
+ * TypingIndicator Component
+ * Displays a subtle, animated notification when other users are typing.
+ * Utilizes sleek B&W dots and minimal typography.
  */
 export default function TypingIndicator({ typingUsers, currentUserId }) {
   const activeTypers = Object.entries(typingUsers)
-    .filter(([userId, isTyping]) => isTyping && userId !== currentUserId)
-    .map(([userId]) => userId);
+    .filter(([userId, isTypingVal]) => isTypingVal && userId !== currentUserId)
+    .map(([userId, isTypingVal]) => typeof isTypingVal === "string" ? isTypingVal : userId);
 
-  if (activeTypers.length === 0) return null;
+  if (activeTypers.length === 0) return <div className="h-6" />; // Maintain height to prevent layout shift
+
+  console.log(`[TypingIndicator] Active typers: ${activeTypers.join(", ")}`);
 
   const label =
     activeTypers.length === 1
@@ -18,58 +21,21 @@ export default function TypingIndicator({ typingUsers, currentUserId }) {
 
   return (
     <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "6px 10px",
-        marginBottom: "8px",
-        fontSize: "0.85rem",
-        color: "#6b7280",
-        fontStyle: "italic",
-      }}
+      className="flex items-center gap-2 px-1 py-1 animate-in fade-in slide-in-from-bottom-1 duration-300"
       aria-live="polite"
       aria-label={label}
     >
-      <span className="typing-dots" style={{ display: "inline-flex", gap: "3px" }}>
-        <span
-          style={{
-            width: "6px",
-            height: "6px",
-            borderRadius: "50%",
-            backgroundColor: "#9ca3af",
-            animation: "typingBounce 1.2s infinite ease-in-out",
-            animationDelay: "0ms",
-          }}
-        />
-        <span
-          style={{
-            width: "6px",
-            height: "6px",
-            borderRadius: "50%",
-            backgroundColor: "#9ca3af",
-            animation: "typingBounce 1.2s infinite ease-in-out",
-            animationDelay: "150ms",
-          }}
-        />
-        <span
-          style={{
-            width: "6px",
-            height: "6px",
-            borderRadius: "50%",
-            backgroundColor: "#9ca3af",
-            animation: "typingBounce 1.2s infinite ease-in-out",
-            animationDelay: "300ms",
-          }}
-        />
+      {/* Sleek B&W Dots */}
+      <div className="flex gap-1">
+        <span className="h-1 w-1 rounded-full bg-foreground/40 animate-bounce [animation-duration:1s] [animation-delay:0s]" />
+        <span className="h-1 w-1 rounded-full bg-foreground/40 animate-bounce [animation-duration:1s] [animation-delay:0.2s]" />
+        <span className="h-1 w-1 rounded-full bg-foreground/40 animate-bounce [animation-duration:1s] [animation-delay:0.4s]" />
+      </div>
+      
+      {/* Label */}
+      <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/80">
+        {label}
       </span>
-      <span>{label}…</span>
-      <style>{`
-        @keyframes typingBounce {
-          0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-          30% { transform: translateY(-4px); opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 }
