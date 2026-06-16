@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon --exec tsx src/index.ts && docker start redis-test",
+    "dev": "nodemon --exec tsx src/server.ts",
     "build": "tsc",
     "lint": "eslint .",
     "start": "node --experimental-specifier-resolution=node dist/index.js"
@@ -30,6 +30,7 @@
     "rate-limit-redis": "^5.0.0",
     "redis": "^5.12.1",
     "socket.io": "^4.8.3",
+    "swagger-ui-express": "^5.0.1",
     "winston": "^3.19.0"
   },
   "devDependencies": {
@@ -38,6 +39,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.9.1",
+    "@types/swagger-ui-express": "^4.1.8",
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^17.6.0",
