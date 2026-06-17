@@ -1,4 +1,4 @@
-import { redisClient } from "../config/redis";
+import { redisClient } from "../config/redis.ts";
 import type { Request, Response, NextFunction } from "express";
 
 interface Options {

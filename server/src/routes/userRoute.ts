@@ -5,8 +5,8 @@ import {
   getProfile,
   updateMail,
   TestRateLimit,
-} from "../controllers/userController";
-import { verifyToken } from "../middleware/authMiddleware";
+} from "../controllers/userController.ts";
+import { verifyToken } from "../middleware/authMiddleware.ts";
 
 
 const router = express.Router();

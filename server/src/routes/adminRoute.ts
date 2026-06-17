@@ -5,11 +5,11 @@ import {
   deleteUserById,
   updateUserRole,
   createAdminAccount,
-} from "../controllers/adminController";
+} from "../controllers/adminController.ts";
 
-import { verifyToken } from "../middleware/authMiddleware";
-import { adminOnly } from "../middleware/roleMiddleware";
-import user from "../models/User";
+import { verifyToken } from "../middleware/authMiddleware.ts";
+import { adminOnly } from "../middleware/roleMiddleware.ts";
+import user from "../models/User.ts";
 
 const router = express.Router();
 router.post("/createAccount", createAdminAccount); // Allow POST for creating admin accounts

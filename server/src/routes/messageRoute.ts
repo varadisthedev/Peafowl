@@ -4,8 +4,8 @@ import {
   deleteMessage,
   editMessage,
   pinMessage,
-} from "../controllers/messageController";
-import { verifyToken } from "../middleware/authMiddleware";
+} from "../controllers/messageController.ts";
+import { verifyToken } from "../middleware/authMiddleware.ts";
 
 const router = express.Router();
 

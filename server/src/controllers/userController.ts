@@ -1,5 +1,5 @@
 import type { Request, Response, CookieOptions } from "express";
-import userModel from "../models/User";
+import userModel from "../models/User.ts";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
