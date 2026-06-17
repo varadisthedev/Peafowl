@@ -1,7 +1,7 @@
 import express from "express";
-import userRouter from "./userRoute";
-import adminRouter from "./adminRoute";
-import messageRouter from "./messageRoute";
+import userRouter from "./userRoute.ts";
+import adminRouter from "./adminRoute.ts";
+import messageRouter from "./messageRoute.ts";
 
 const router = express.Router();
 

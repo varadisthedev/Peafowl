@@ -1,20 +1,20 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import connectMongo from "./config/connectToMongoDB";
+import connectMongo from "./config/connectToMongoDB.ts";
 import cookieParser from "cookie-parser";
 import chalk from "chalk";
 import http from "http";
 import { Server } from "socket.io";
 
-import router from "./routes/index";
-import setupSocket from "./services/socket";
-import { setupSwagger } from "./swagger/index";
-import { initChatSubscriber } from "./pubsub/index";
+import router from "./routes/index.ts";
+import setupSocket from "./services/socket.ts";
+import { setupSwagger } from "./swagger/index.ts";
+import { initChatSubscriber } from "./pubsub/index.ts";
 
 // adding redis rate limit 
-import RedisRateLimiter from "./middleware/redisRateLimiter";
-import { logger } from "./middleware/customLogger";
+import RedisRateLimiter from "./middleware/redisRateLimiter.ts";
+import { logger } from "./middleware/customLogger.ts";
 import { execSync } from "child_process"
 dotenv.config();
 const app = express();

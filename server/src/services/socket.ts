@@ -1,4 +1,4 @@
-import { saveMessage } from "./messageService";
+import { saveMessage } from "./messageService.ts";
 import {
   chatPublisher,
   SOCKET_EMIT_EVENTS,
