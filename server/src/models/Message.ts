@@ -18,7 +18,7 @@ const MessageSchema = new mongoose.Schema(
     },
     timestamp: {
       type: Date,
-      default: Date.now,  
+      default: Date.now,
       index: true,
     },
     isEdited: {
@@ -41,6 +41,18 @@ const MessageSchema = new mongoose.Schema(
       type: Map,
       of: Array,
       default: new Map(),
+    },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId, // userId 
+      default: null,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true },
