@@ -8,30 +8,55 @@ services:
 
     ports:
       - "3000:3000"
+      - "5000:5000"
 
     env_file:
       - ./server/.env
-
+    # env will only be used in container, hence won't interfere with local dev
     environment:
       - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/chatapp
 
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
 
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
-
     container_name: peafowl-redis
-
     ports:
       - "6379:6379"
-
     volumes:
       - redis_data:/data
-
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  postgres:
+    image: postgres:17
+    container_name: peafowl-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: chatapp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
 volumes:
   redis_data:
+  postgres_data:
