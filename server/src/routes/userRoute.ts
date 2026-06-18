@@ -1,6 +1,7 @@
 import express from "express";
 import {
-  register,
+  sendOtpForRegistration,
+  verifyOtpAndRegister,
   login,
   getProfile,
   updateMail,
@@ -8,11 +9,13 @@ import {
 } from "../controllers/userController.ts";
 import { verifyToken } from "../middleware/authMiddleware.ts";
 
-
 const router = express.Router();
 
 // Public routes (no authentication needed)
-router.post("/register", register);
+// Step 1: Validate inputs & send OTP to email
+router.post("/register/send-otp", sendOtpForRegistration);
+// Step 2: Submit OTP → create account
+router.post("/register/verify-otp", verifyOtpAndRegister);
 router.post("/login", login);
 router.get("/testRateLimit", TestRateLimit);
 
