@@ -8,7 +8,7 @@ if (!ResendKey) {
 }
 const resend = new Resend(ResendKey);
 
-const OTP_TTL = 300;           // 5 minutes (seconds)
+const OTP_TTL = 420;           // 7 minutes (seconds)
 const MAX_OTP_ATTEMPTS = 5;    // max wrong guesses before lockout
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -85,7 +85,7 @@ export const sendOtp = async (userMail: string) => {
 
 export const verifyOtp = async (userMail: string, otp: string) => {
     try {
-        // Check attempt count first (brute-force guard)
+        // Check attempt count first
         const attemptsKey = `otp_attempts:${userMail}`;
         const attempts = parseInt((await redis.get(attemptsKey)) ?? "0", 10);
         if (attempts >= MAX_OTP_ATTEMPTS) {
