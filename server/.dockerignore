@@ -22,6 +22,9 @@ docker-compose*.yml
 # build output (if TS project)
 dist
 
+# Prisma generated client (regenerated during docker build via prisma generate)
+generated
+
 # OS junk
 .DS_Store
 Thumbs.db
