@@ -9,8 +9,6 @@ import {
 
 import { verifyToken } from "../middleware/authMiddleware.ts";
 import { adminOnly } from "../middleware/roleMiddleware.ts";
-import user from "../models/User.ts";
-
 const router = express.Router();
 router.post("/createAccount", createAdminAccount); // Allow POST for creating admin accounts
 

@@ -1,8 +1,9 @@
 import type { Request, Response, CookieOptions } from "express";
-import userModel from "../models/User.ts";
+import { prisma } from "../config/prisma.ts";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import { Prisma } from "../generated/prisma/client.ts";
 
 // OTP + pending-user helpers
 import {
@@ -38,7 +39,7 @@ export const TestRateLimit = async (req: Request, res: Response) => {
 
 /**
  * Step 1 — Validate inputs, store pending user in Redis, send OTP.
- * MongoDB is NOT touched yet.
+ * Postgres is NOT touched yet.
  */
 export const sendOtpForRegistration = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -54,12 +55,12 @@ export const sendOtpForRegistration = async (req: Request, res: Response): Promi
     }
 
     // Check uniqueness before bothering Resend's API
-    const existingByEmail = await userModel.findOne({ email });
+    const existingByEmail = await prisma.user.findUnique({ where: { email } });
     if (existingByEmail) {
       res.status(409).json({ message: "Email already exists" });
       return;
     }
-    const existingByUsername = await userModel.findOne({ username });
+    const existingByUsername = await prisma.user.findUnique({ where: { username } });
     if (existingByUsername) {
       res.status(409).json({ message: "Username already exists" });
       return;
@@ -87,7 +88,7 @@ export const sendOtpForRegistration = async (req: Request, res: Response): Promi
 
 /**
  * Step 2 — Verify the OTP submitted by the user, then create the account.
- * Only writes to MongoDB once the OTP is confirmed.
+ * Only writes to Postgres once the OTP is confirmed.
  */
 export const verifyOtpAndRegister = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -115,13 +116,13 @@ export const verifyOtpAndRegister = async (req: Request, res: Response): Promise
     }
 
     // Guard against a race where the email/username was taken during the OTP window
-    const existingByEmail = await userModel.findOne({ email });
+    const existingByEmail = await prisma.user.findUnique({ where: { email } });
     if (existingByEmail) {
       await deletePendingUser(email);
       res.status(409).json({ message: "Email already exists" });
       return;
     }
-    const existingByUsername = await userModel.findOne({ username: pending.username });
+    const existingByUsername = await prisma.user.findUnique({ where: { username: pending.username } });
     if (existingByUsername) {
       await deletePendingUser(email);
       res.status(409).json({ message: "Username already exists" });
@@ -129,29 +130,32 @@ export const verifyOtpAndRegister = async (req: Request, res: Response): Promise
     }
 
     // All good — create the user
-    const newUser = new userModel({
-      username: pending.username,
-      email: pending.email,
-      password: pending.hashedPassword,
+    const newUser = await prisma.user.create({
+      data: {
+        username: pending.username,
+        email: pending.email,
+        password: pending.hashedPassword,
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+      },
     });
-    await newUser.save();
 
     // Clean up pending user from Redis
     await deletePendingUser(email);
 
     res.status(201).json({
       message: "User registered successfully",
-      user: {
-        id: newUser._id,
-        username: newUser.username,
-        email: newUser.email,
-        role: newUser.role,
-      },
+      user: newUser,
     });
   } catch (error: any) {
-    if (error?.code === 11000) {
-      const key = error.keyValue ? Object.keys(error.keyValue)[0] : "field";
-      res.status(409).json({ message: `${key} already exists` });
+    // Prisma unique constraint violation code
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      const field = (error.meta?.target as string[])?.join(", ") ?? "field";
+      res.status(409).json({ message: `${field} already exists` });
       return;
     }
     console.error("[register/verify-otp]", error?.message);
@@ -165,12 +169,24 @@ export const login = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "email and password are required" });
   }
   try {
-    const user = await userModel.findOne({ email }).select("+password");
+    // password field must be explicitly selected since it is not selected by default
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        role: true,
+        username: true,
+      },
+    });
+
     if (!user) {
       return res
         .status(400)
         .json({ message: "please register, account not found" });
     }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(400).json({ message: "Invalid credentials" });
@@ -178,7 +194,7 @@ export const login = async (req: Request, res: Response) => {
 
     // generate JWT token
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      { userId: user.id, role: user.role },
       process.env.JWT_SECRET,
       {
         expiresIn: "1h",
@@ -186,7 +202,6 @@ export const login = async (req: Request, res: Response) => {
     );
 
     res.cookie("token", token, cookieOptions);
-    // storing cookie in the token variable and sending it
 
     res.status(200).json({
       message: "Login successful",
@@ -201,7 +216,6 @@ export const logout = (req: Request, res: Response) => {
   // clear auth cookie during logout
   try {
     res.clearCookie("token", baseCookieOptions);
-
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error during logout" });
@@ -210,30 +224,45 @@ export const logout = (req: Request, res: Response) => {
 
 export const getProfile = async (req: Request, res: Response) => {
   try {
-    const user = await userModel.findById(req.user.userId).select("-password");
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        isLegacyAccount: true,
+        contactNumber: true,
+        avatar: true,
+        bio: true,
+        lastSeen: true,
+        status: true,
+        links: true,
+        profileQRCode: true,
+        accountRep: true,
+        banReason: true,
+        createdAt: true,
+        updatedAt: true,
+        // password deliberately excluded
+      },
+    });
     if (!user) {
       return res.status(404).json({ message: "User not found in db" });
     }
     res.status(200).json(user);
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ message: "Server error", err: error.message });
   }
 };
 
 export const updateMail = async (req: Request, res: Response) => {
   try {
-    // check if user exists
-    // check if new mail already exists
-    // check if current mail matches the one in db
-    // check if new mail is valid format (regex)
-    // check if new mail is same as current mail
-    // if all checks pass, update mail and save user
-
     const { currentMail, newMail } = req.body as { currentMail?: string; newMail?: string };
     if (!currentMail || !newMail) {
       return res.status(400).json({ message: "currentMail and newMail are required" });
     }
-    const user = await userModel.findById(req.user.userId);
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
 
     if (!user) {
       return res.status(404).json({ message: "User not found in db" });
@@ -244,17 +273,24 @@ export const updateMail = async (req: Request, res: Response) => {
     if (currentMail === newMail) {
       return res.status(400).json({ message: "newMail cannot be the same as currentMail" });
     }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newMail)) {
       return res.status(400).json({ message: "newMail is not a valid email format" });
     }
-    if (await userModel.findOne({ email: newMail })) {
+
+    const emailTaken = await prisma.user.findUnique({ where: { email: newMail } });
+    if (emailTaken) {
       return res.status(400).json({ message: "newMail already exists" });
     }
-    user.email = newMail;
-    await user.save();
-    res.status(200).json(user);
-  } catch (err) {
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { email: newMail },
+    });
+
+    res.status(200).json(updated);
+  } catch (err: any) {
     res.status(500).json({ message: "Server error", err: err.message });
   }
 };

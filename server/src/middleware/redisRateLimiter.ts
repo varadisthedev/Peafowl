@@ -14,16 +14,21 @@ export default function slidingWindowRateLimiter(opts: Options) {
   return async function (req: Request, res: Response, next: NextFunction) {
     try {
       const key = `${keyPrefix}${keyGenerator(req)}`;
+      // ex: rl:127.0.0.1
       const now = Date.now();
       const windowStart = now - windowMs;
 
       // Pipeline: remove old entries, add this request, get count, set expiry
-      const member = `${now}-${Math.random().toString(36).slice(2)}`;
+      const member = `${now}-${Math.random().toString(36).slice(2)}`; // to prevent duplicates
+      // ex: 1745136000000-1234567890 
+
+
       const p = redisClient.pipeline();
-      p.zremrangebyscore(key, 0, windowStart);
-      p.zadd(key, now, member);
-      p.zcard(key);
-      p.expire(key, Math.ceil(windowMs / 1000) + 1);
+      p.zremrangebyscore(key, 0, windowStart); // remove old entries
+      p.zadd(key, now, member); // add this request
+      p.zcard(key); // get count of requests in the window
+      p.expire(key, Math.ceil(windowMs / 1000) + 1); // set expiry time (1 second more to prevent race conditions)
+      
       const [, , countReply] = await p.exec();
       const current = typeof countReply === "object" && "ok" in countReply ? Number(countReply[1]) : Number(countReply);
 

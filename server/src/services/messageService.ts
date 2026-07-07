@@ -1,9 +1,22 @@
-import Message from "../models/Message.ts";
+import { prisma } from "../config/prisma.ts";
 
-export const saveMessage = async (messageData) => {
+/**
+ * Persist a new message to Postgres.
+ * Called by the socket handler on every SEND_MESSAGE event.
+ */
+export const saveMessage = async (messageData: {
+  roomId: string;
+  senderId: number;
+  content: string;
+}) => {
   try {
-    const message = new Message(messageData);
-    await message.save();
+    const message = await prisma.message.create({
+      data: {
+        roomId: messageData.roomId,
+        senderId: messageData.senderId,
+        content: messageData.content,
+      },
+    });
     return message;
   } catch (error) {
     console.error("[MessageService] Error saving message:", error);
@@ -11,13 +24,22 @@ export const saveMessage = async (messageData) => {
   }
 };
 
-export const getMessagesByRoom = async (roomId, limit = 50, skip = 0) => {
+/**
+ * Fetch paginated messages for a room, oldest-first.
+ */
+export const getMessagesByRoom = async (
+  roomId: string,
+  limit = 50,
+  skip = 0,
+) => {
   try {
-    const messages = await Message.find({ roomId })
-      .sort({ timestamp: -1 })
-      .limit(limit)
-      .skip(skip);
-    return messages.reverse();
+    const messages = await prisma.message.findMany({
+      where: { roomId },
+      orderBy: { timestamp: "desc" },
+      take: limit,
+      skip,
+    });
+    return messages.reverse(); // return oldest-first for display
   } catch (error) {
     console.error("[MessageService] Error fetching messages:", error);
     throw error;
