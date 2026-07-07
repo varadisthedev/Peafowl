@@ -1,0 +1,89 @@
+// Prisma schema — Peafowl
+// learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  user
+  admin
+  moderator
+}
+
+enum UserStatus {
+  online
+  offline
+  away
+  busy
+  invisible
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id              Int        @id @default(autoincrement())
+  username        String     @unique @db.VarChar(30)
+  email           String     @unique
+  password        String
+  role            Role       @default(user)
+  isLegacyAccount Boolean    @default(true)
+  contactNumber   String?    @unique
+  avatar          String     @default("")
+  bio             String     @default("")
+  lastSeen        DateTime   @default(now())
+  status          UserStatus @default(offline)
+
+  // Replaces Mongoose Map<string, string> — stored as JSON object
+  links           Json       @default("{}")
+
+  profileQRCode   String     @default("")
+  accountRep      Int        @default(1000)
+  banReason       String     @default("")
+
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Relations
+  sentMessages    Message[]  @relation("MessageSender")
+  deletedMessages Message[]  @relation("MessageDeletedBy")
+}
+
+model Message {
+  id          Int       @id @default(autoincrement())
+  roomId      String
+  content     String
+
+  // FK to User
+  senderId    Int
+  sender      User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  timestamp   DateTime  @default(now())
+  isEdited    Boolean   @default(false)
+  isPinned    Boolean   @default(false)
+  pinnedAt    DateTime?
+  editedAt    DateTime?
+
+  // Replaces Mongoose Map<string, Array> — stored as JSON object {"👍": ["userId1", ...]}
+  reactions   Json      @default("{}")
+
+  isDeleted   Boolean   @default(false)
+  deletedAt   DateTime?
+
+  // Nullable FK — who deleted this message
+  deletedById Int?
+  deletedBy   User?     @relation("MessageDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([roomId])
+  @@index([timestamp])
+}

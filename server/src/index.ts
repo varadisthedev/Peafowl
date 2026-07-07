@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import connectMongo from "./config/connectToMongoDB.ts";
+import { connectPrisma } from "./config/prisma.ts";
 import cookieParser from "cookie-parser";
 import chalk from "chalk";
 import http from "http";
@@ -34,7 +34,7 @@ const io = new Server(server, {
 });
 
 // Connect to db
-connectMongo();
+await connectPrisma();
 
 // middlware
 app.use(logger);
