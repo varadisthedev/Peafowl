@@ -95,16 +95,16 @@ export default function setupSocket(io) {
       try {
         const savedMessage = await saveMessage({
           roomId: msg.roomId,
-          sender: msg.sender,
+          senderId: Number(msg.sender), // sender is userId from client
           content: msg.content,
         });
 
         const published = await chatPublisher.publishMessage(
           msg.roomId,
           {
-            _id: savedMessage._id,
+            _id: savedMessage.id,
             roomId: savedMessage.roomId,
-            sender: savedMessage.sender,
+            sender: savedMessage.senderId,
             content: savedMessage.content,
             timestamp: savedMessage.timestamp,
             isEdited: savedMessage.isEdited,
@@ -119,9 +119,9 @@ export default function setupSocket(io) {
             msg.roomId,
             SOCKET_EMIT_EVENTS.RECEIVE_MESSAGE,
             {
-              _id: savedMessage._id,
+              _id: savedMessage.id,
               roomId: savedMessage.roomId,
-              sender: savedMessage.sender,
+              sender: savedMessage.senderId,
               content: savedMessage.content,
               timestamp: savedMessage.timestamp,
               isEdited: savedMessage.isEdited,

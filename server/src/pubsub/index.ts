@@ -15,17 +15,6 @@
  * Every server instance (including the publisher) subscribes and broadcasts
  * to its local Socket.IO clients, enabling multi-instance deployments.
  *
- * Usage
- * -----
- * ```ts
- * import { chatPublisher, initChatSubscriber } from "./pubsub";
- *
- * // At startup (after creating io):
- * await initChatSubscriber(io);
- *
- * // In a socket handler:
- * await chatPublisher.publishMessage(roomId, savedMessage, socket.id);
- * ```
  */
 
 export { chatPublisher, ChatPublisher } from "./chatPublisher.ts";

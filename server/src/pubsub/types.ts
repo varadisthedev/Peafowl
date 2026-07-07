@@ -5,6 +5,8 @@
  * Each message is a JSON-serialized ChatPubSubEvent.
  */
 
+// types prevents any bugs from importing the wrong Redis client type (e.g. ioredis vs node-redis).
+
 export const CHAT_PUBSUB_CHANNEL = "peafowl:chat:events";
 
 /** Discriminated union of every chat event that can be published. */
