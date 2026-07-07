@@ -28,9 +28,6 @@ RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-# Copy the generated Prisma client from builder
-COPY --from=builder /app/generated ./generated
-
 EXPOSE 3000
 
 # Run migrations then start the server

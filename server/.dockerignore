@@ -23,7 +23,7 @@ docker-compose*.yml
 dist
 
 # Prisma generated client (regenerated during docker build via prisma generate)
-generated
+src/generated
 
 # OS junk
 .DS_Store
