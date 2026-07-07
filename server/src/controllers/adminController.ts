@@ -1,22 +1,31 @@
-import userModel from "../models/User.ts";
+import type { Request, Response } from "express";
+import { prisma } from "../config/prisma.ts";
+import { Prisma, Role } from "../generated/prisma/client.ts";
 import bcrypt from "bcrypt";
-export const getAllUsers = async (req, res) => {
+
+export const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const users = await userModel.find({}, { username: 1, email: 1, _id: 0 });
+    const users = await prisma.user.findMany({
+      select: { username: true, email: true },
+    });
     res.send(users);
   } catch (error) {
     res.status(500).json({ message: "Server error with the database" });
   }
 };
 
-export const getUserById = async (req, res) => {
+export const getUserById = async (req: Request, res: Response) => {
   try {
-    const user = await userModel.findById(req.params.id, {
-      username: 1,
-      email: 1,
-      role: 1,
-      _id: 0,
+    const id = parseInt(req.params["id"] as string, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid user id" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { username: true, email: true, role: true },
     });
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -26,28 +35,43 @@ export const getUserById = async (req, res) => {
   }
 };
 
-export const deleteUserById = async (req, res) => {
+export const deleteUserById = async (req: Request, res: Response) => {
   try {
-    const user = await userModel.findByIdAndDelete(req.params.id);
-    if (!user) {
+    const id = parseInt(req.params["id"] as string, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid user id" });
+    }
+
+    await prisma.user.delete({ where: { id } });
+    res.json({ message: "User deleted successfully" });
+  } catch (error: any) {
+    // P2025 = record not found
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
       return res.status(404).json({ message: "User not found" });
     }
-    res.json({ message: "User deleted successfully" });
-  } catch (error) {
     res.status(500).json({ message: "Server error with the database" });
   }
 };
 
-export const updateUserRole = async (req, res) => {
+export const updateUserRole = async (req: Request, res: Response) => {
   try {
-    const user = await userModel.findByIdAndUpdate(
-      req.params.id,
-      { role: req.body.role },
-      { new: true },
-    );
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    const id = parseInt(req.params["id"] as string, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid user id" });
     }
+
+    const role = req.body.role as Role;
+    const validRoles: Role[] = ["user", "admin", "moderator"];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ message: "Invalid role value" });
+    }
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: { role },
+      select: { username: true, role: true },
+    });
+
     res.json({
       message:
         "User role updated successfully for user: " +
@@ -55,40 +79,60 @@ export const updateUserRole = async (req, res) => {
         " to role: " +
         user.role,
     });
-  } catch (err) {
+  } catch (error: any) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      return res.status(404).json({ message: "User not found" });
+    }
     res.status(500).json({ message: "Server error with the database" });
   }
 };
 
-export const createAdminAccount = async (req, res) => {
+export const createAdminAccount = async (req: Request, res: Response) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password } = req.body as {
+      username?: string;
+      email?: string;
+      password?: string;
+    };
+
     if (!username || !email || !password) {
       return res
         .status(400)
         .json({ message: "Username, email and password are required" });
     }
-    const existingUser = await userModel.findOne({
-      $or: [{ username }, { email }],
+
+    // Check if username OR email already exists
+    const existingUser = await prisma.user.findFirst({
+      where: { OR: [{ username }, { email }] },
     });
+
     if (existingUser) {
       return res
         .status(400)
         .json({ message: "User with this username or email already exists" });
     }
-    const newAdmin = new userModel({
-      username,
-      email,
-      password,
-      role: "admin",
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newAdmin = await prisma.user.create({
+      data: {
+        username,
+        email,
+        password: hashedPassword,
+        role: "admin",
+      },
+      select: { email: true },
     });
-    newAdmin.password = await bcrypt.hash(password, 10);
-    await newAdmin.save();
+
     res.status(201).json({
       message: "Admin account created successfully",
       email: newAdmin.email,
     });
-  } catch (err) {
+  } catch (err: any) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      const field = (err.meta?.target as string[])?.join(", ") ?? "field";
+      return res.status(400).json({ message: `${field} already exists` });
+    }
     res.status(500).json({
       message: "Server error with the database",
       "error message": err.message,
