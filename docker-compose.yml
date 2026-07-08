@@ -25,6 +25,25 @@ services:
 
     restart: unless-stopped
 
+  prisma-studio:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: builder
+    container_name: peafowl-prisma-studio
+    command: ["npx", "prisma", "studio", "--port", "5555", "--browser", "none"]
+    ports:
+      - "5555:5555"
+    env_file:
+      - ./server/.env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/chatapp
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - tools
+
   redis:
     image: redis:7-alpine
     container_name: peafowl-redis
@@ -60,3 +79,4 @@ services:
 volumes:
   redis_data:
   postgres_data:
+  server_data:

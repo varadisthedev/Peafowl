@@ -10,7 +10,8 @@
     "start": "node --experimental-specifier-resolution=node dist/index.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio --port 5555 --browser none"
   },
   "keywords": [],
   "author": "",

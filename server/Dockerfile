@@ -7,6 +7,7 @@ COPY package*.json ./
 RUN npm ci
 
 COPY tsconfig.json ./
+COPY prisma.config.ts ./
 COPY prisma ./prisma
 COPY src ./src
 
@@ -24,8 +25,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 
-# Copy compiled output and the Prisma schema (needed by migrate deploy)
+# Copy compiled output, Prisma config, and schema (needed by migrate deploy)
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/prisma ./prisma
 
 EXPOSE 3000
