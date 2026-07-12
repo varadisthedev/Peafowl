@@ -39,6 +39,7 @@ await connectPrisma();
 // middlware
 app.use(logger);
 app.use(express.json());
+app.set("trust proxy", true);
 const apiLimiter = RedisRateLimiter({ windowMs: 15 * 60 * 1000, max: 100 });
 app.use("/api", apiLimiter);
 
