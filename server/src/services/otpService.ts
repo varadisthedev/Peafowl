@@ -51,6 +51,7 @@ export const deletePendingUser = async (email: string): Promise<void> => {
 export const sendOtp = async (userMail: string) => {
     try {
         const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+        console.log(`[OTP DEBUG] Generated OTP for ${userMail} is: ${otp}`);
         const hashedOtp = hashOtp(otp);
 
         // Store hashed OTP with TTL
