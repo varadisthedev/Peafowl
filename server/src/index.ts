@@ -28,7 +28,7 @@ app.set("trust proxy", true);
 const server = http.createServer(app); // wrapping express app in http server for Socket.io
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: process.env.CLIENT_URL,
     credentials: true,
   },
 });
@@ -42,9 +42,12 @@ app.use(express.json());
 const apiLimiter = RedisRateLimiter({ windowMs: 15 * 60 * 1000, max: 100 });
 app.use("/api", apiLimiter);
 
+if (!process.env.CLIENT_URL || process.env.CLIENT_URL.endsWith("/")) {
+  throw new Error("add CLIENT_URL in env without the trailing slash")
+}
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: process.env.CLIENT_URL,
     credentials: true,
   }),
 );
