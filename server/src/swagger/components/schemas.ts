@@ -72,6 +72,25 @@ export const schemas = {
     },
   },
 
+  SendOtpRequest: {
+    type: "object",
+    required: ["username", "email", "password"],
+    properties: {
+      username: { type: "string", minLength: 3, maxLength: 30, example: "peafowl_user" },
+      email: { type: "string", format: "email", example: "user@example.com" },
+      password: { type: "string", format: "password", minLength: 6, example: "securePass123" },
+    },
+  },
+
+  VerifyOtpRequest: {
+    type: "object",
+    required: ["email", "otp"],
+    properties: {
+      email: { type: "string", format: "email", example: "user@example.com" },
+      otp: { type: "string", minLength: 6, maxLength: 6, example: "123456" },
+    },
+  },
+
   LoginRequest: {
     type: "object",
     required: ["email", "password"],
