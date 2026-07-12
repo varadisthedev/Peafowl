@@ -1,16 +1,25 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Plus, Hash } from "lucide-react";
+import { Plus, Hash, X } from "lucide-react";
 import { cn } from "../lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "./ui/dialog";
 
 /**
  * RoomSelector Component
  * Allows users to join or create chat rooms.
- * Designed as a vertical list of channels for the sidebar.
+ * Formatted to look exactly like Discord's Channel Sidebar list.
  */
 export default function RoomSelector({ onSelectRoom, currentRoomId }) {
   const [newRoomId, setNewRoomId] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  
   // Default rooms list
   const [rooms, setRooms] = useState(["general", "development", "random", "feedback"]);
 
@@ -27,6 +36,7 @@ export default function RoomSelector({ onSelectRoom, currentRoomId }) {
     }
     onSelectRoom(trimmedRoom);
     setNewRoomId("");
+    setIsOpen(false); // Close dialog modal
   };
 
   const handleSelectRoom = (roomId) => {
@@ -35,29 +45,22 @@ export default function RoomSelector({ onSelectRoom, currentRoomId }) {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Join/Create Input */}
-      <div className="flex flex-col gap-2 px-2">
-        <div className="relative group">
-          <Input
-            type="text"
-            value={newRoomId}
-            onChange={(e) => setNewRoomId(e.target.value)}
-            placeholder="new-channel"
-            className="h-8 border-border bg-muted/50 text-xs focus-visible:ring-1 focus-visible:ring-foreground pr-8"
-            onKeyDown={(e) => e.key === "Enter" && handleAddRoom()}
-          />
-          <button 
-            onClick={handleAddRoom}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Plus className="h-3.5 w-3.5" />
-          </button>
-        </div>
+    <div className="flex flex-col gap-4 select-none">
+      
+      {/* Category Header with Create Channel trigger */}
+      <div className="flex items-center justify-between px-3 pt-2 text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">
+        <span className="hover:text-[#f2f3f5] cursor-default transition-colors">Text Channels</span>
+        <button 
+          onClick={() => setIsOpen(true)}
+          className="text-[#949ba4] hover:text-[#f2f3f5] transition-colors"
+          title="Create Channel"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
       </div>
 
-      {/* Rooms List */}
-      <div className="flex flex-col gap-1 px-1">
+      {/* Channels List */}
+      <div className="flex flex-col gap-0.5 px-2">
         {rooms.map((room) => {
           const isActive = currentRoomId === room;
           return (
@@ -65,21 +68,69 @@ export default function RoomSelector({ onSelectRoom, currentRoomId }) {
               key={room}
               onClick={() => handleSelectRoom(room)}
               className={cn(
-                "group flex items-center justify-between rounded-sm px-3 py-2 text-xs font-medium transition-all duration-200",
+                "group flex items-center justify-between rounded px-2 py-1.5 text-[14px] font-medium transition-colors text-left",
                 isActive 
-                  ? "bg-foreground text-background" 
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-[#35373c] text-white" 
+                  : "text-[#949ba4] hover:bg-[#35373c]/60 hover:text-[#dbdee1]"
               )}
             >
-              <div className="flex items-center gap-2">
-                <Hash className={cn("h-3.5 w-3.5", isActive ? "text-background" : "text-muted-foreground")} />
+              <div className="flex items-center gap-1.5 overflow-hidden">
+                <Hash className={cn("h-5 w-5 shrink-0", isActive ? "text-[#f2f3f5]" : "text-[#80848e] group-hover:text-[#dbdee1]")} />
                 <span className="truncate">{room}</span>
               </div>
-              {isActive && <div className="h-1 w-1 rounded-full bg-background" />}
             </button>
           );
         })}
       </div>
+
+      {/* Discord Dialog Modal for Creating Channels */}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-[440px] rounded bg-[#313338] border-none text-[#f2f3f5] p-5 shadow-[0_8px_24px_rgba(0,0,0,0.3)]">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-xl font-bold text-white tracking-wide">
+              Create Channel
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-[#b5bac1] flex items-center gap-1">
+                Channel Name
+              </label>
+              
+              <div className="relative flex items-center bg-[#1e1f22] rounded">
+                <Hash className="absolute left-3 h-5 w-5 text-[#80848e]" />
+                <Input
+                  type="text"
+                  value={newRoomId}
+                  onChange={(e) => setNewRoomId(e.target.value)}
+                  placeholder="new-channel"
+                  className="h-10 w-full rounded border-none bg-transparent pl-10 pr-3 text-[14px] text-[#f2f3f5] focus-visible:ring-0 placeholder:text-[#949ba4] focus-visible:outline-none"
+                  onKeyDown={(e) => e.key === "Enter" && handleAddRoom()}
+                  autoFocus
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="mt-6 flex justify-end gap-3 bg-[#2b2d31] p-3 -mx-5 -mb-5 rounded-b">
+            <Button
+              variant="ghost"
+              onClick={() => setIsOpen(false)}
+              className="h-9 px-4 text-xs font-semibold text-white hover:underline hover:bg-transparent"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddRoom}
+              disabled={!newRoomId.trim()}
+              className="h-9 px-5 rounded bg-[#5865f2] hover:bg-[#4752c4] active:bg-[#3c45a5] font-semibold text-white text-xs transition-colors disabled:opacity-50"
+            >
+              Create Channel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

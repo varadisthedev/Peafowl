@@ -6,48 +6,61 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0 0 0);
-  --primary: oklch(0 0 0);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.96 0 0);
-  --secondary-foreground: oklch(0 0 0);
-  --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.45 0 0);
-  --accent: oklch(0.96 0 0);
-  --accent-foreground: oklch(0 0 0);
-  --destructive: oklch(0.6 0.2 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.9 0 0);
-  --input: oklch(0.9 0 0);
-  --ring: oklch(0 0 0);
-  --radius: 0.25rem;
+  --background: #FFFFFF;
+  --foreground: #313338;
+  --card: #F2F3F5;
+  --card-foreground: #313338;
+  --popover: #FFFFFF;
+  --popover-foreground: #313338;
+  --primary: #5865F2;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E3E5E8;
+  --secondary-foreground: #4E5058;
+  --muted: #F2F3F5;
+  --muted-foreground: #747F8D;
+  --accent: #E3E5E8;
+  --accent-foreground: #313338;
+  --destructive: #F23F43;
+  --destructive-foreground: #FFFFFF;
+  --border: #E3E5E8;
+  --input: #E3E5E8;
+  --ring: #5865F2;
+  --radius: 8px;
+
+  /* Discord custom colors */
+  --discord-sidebar: #1E1F22;
+  --discord-channels: #2B2D31;
+  --discord-chat: #313338;
+  --discord-members: #2B2D31;
+  --discord-blurple: #5865F2;
+  --discord-blurple-hover: #4752C4;
+  --discord-green: #23A55A;
+  --discord-yellow: #F0B232;
+  --discord-red: #F23F43;
+  --discord-gray: #80848E;
+  --discord-card: #383A40;
 }
 
 .dark {
-  --background: oklch(0 0 0);
-  --foreground: oklch(1 0 0);
-  --card: oklch(0.05 0 0);
-  --card-foreground: oklch(1 0 0);
-  --popover: oklch(0.05 0 0);
-  --popover-foreground: oklch(1 0 0);
-  --primary: oklch(1 0 0);
-  --primary-foreground: oklch(0 0 0);
-  --secondary: oklch(0.1 0 0);
-  --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.1 0 0);
-  --muted-foreground: oklch(0.6 0 0);
-  --accent: oklch(0.1 0 0);
-  --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.4 0.2 25);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.2 0 0);
-  --input: oklch(0.2 0 0);
-  --ring: oklch(1 0 0);
+  --background: #313338;
+  --foreground: #F2F3F5;
+  --card: #2B2D31;
+  --card-foreground: #F2F3F5;
+  --popover: #383A40;
+  --popover-foreground: #F2F3F5;
+  --primary: #5865F2;
+  --primary-foreground: #FFFFFF;
+  --secondary: #2B2D31;
+  --secondary-foreground: #B5BAC1;
+  --muted: #1E1F22;
+  --muted-foreground: #949BA4;
+  --accent: #35363C;
+  --accent-foreground: #F2F3F5;
+  --destructive: #F23F43;
+  --destructive-foreground: #FFFFFF;
+  --border: #3F4147;
+  --input: #1E1F22;
+  --ring: #5865F2;
 }
 
 @theme inline {
@@ -56,6 +69,19 @@
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
+
+  /* Extend colors */
+  --color-discord-sidebar: var(--discord-sidebar);
+  --color-discord-channels: var(--discord-channels);
+  --color-discord-chat: var(--discord-chat);
+  --color-discord-members: var(--discord-members);
+  --color-discord-blurple: var(--discord-blurple);
+  --color-discord-blurple-hover: var(--discord-blurple-hover);
+  --color-discord-green: var(--discord-green);
+  --color-discord-yellow: var(--discord-yellow);
+  --color-discord-red: var(--discord-red);
+  --color-discord-gray: var(--discord-gray);
+  --color-discord-card: var(--discord-card);
 }
 
 @layer base {
@@ -78,21 +104,59 @@
   flex-direction: column;
 }
 
-/* Custom Scrollbar for sleek B&W look */
+/* Custom Scrollbar for sleek Discord look */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background-color: transparent;
+  background-color: #2e3035;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: color-mix(in oklab, var(--muted-foreground) 20%, transparent);
-  border-radius: 9999px;
+  background-color: #1a1b1e;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: color-mix(in oklab, var(--muted-foreground) 40%, transparent);
+  background-color: #111214;
+}
+
+/* Scrollbar for channels and members - thin and hidden until hover */
+.scrollbar-discord-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #1a1b1e transparent;
+}
+
+.scrollbar-discord-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-discord-thin::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.scrollbar-discord-thin::-webkit-scrollbar-thumb {
+  background-color: #1a1b1e;
+  border-radius: 2px;
+}
+
+.scrollbar-discord-thin:hover::-webkit-scrollbar-thumb {
+  background-color: #111214;
+}
+
+/* Animations */
+@keyframes discord-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-discord-bounce {
+  animation: discord-bounce 0.8s infinite ease-in-out;
 }

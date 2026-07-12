@@ -1,21 +1,13 @@
-import { useState } from "react";
+  import { useState } from "react";
 import { authAPI } from "../services/api";
 import { getLoginErrorMessage } from "../lib/authErrors";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 
 /**
  * Login Component
  * Handles user authentication via email and password.
- * Designed with a minimal black and white aesthetic.
+ * Designed with a high-fidelity Discord-inspired dark login panel.
  */
 export default function Login({ onLoginSuccess, onSwitchToRegister }) {
   const [email, setEmail] = useState("");
@@ -60,71 +52,84 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4 dark">
-      <Card className="w-full max-w-sm border-border bg-card shadow-2xl transition-all duration-300">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-bold tracking-tighter">
-            PEAFOWL
-          </CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Enter your credentials to access the chat
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                Email
-              </label>
-              <Input
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="border-border bg-transparent focus:ring-1 focus:ring-foreground"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                Password
-              </label>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="border-border bg-transparent focus:ring-1 focus:ring-foreground"
-              />
-            </div>
-            {error && (
-              <div className="rounded border border-destructive/50 bg-destructive/10 p-2 text-xs text-destructive">
-                {error}
-              </div>
-            )}
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-foreground text-background hover:bg-foreground/90"
-            >
-              {loading ? "Authenticating..." : "Login"}
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-2 border-t border-border pt-4">
-          <p className="text-center text-xs text-muted-foreground">
-            Don't have an account?{" "}
+    <div className="relative flex min-h-screen items-center justify-center bg-[#1e1f22] p-4 select-none">
+      {/* Background abstract overlay to resemble Discord's login theme */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--color-discord-blurple)_0%,_transparent_40%)] opacity-30 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--color-discord-green)_0%,_transparent_45%)] opacity-20 pointer-events-none" />
+
+      <div className="relative z-10 w-full max-w-[480px] rounded-lg bg-[#313338] p-8 shadow-[0_8px_24px_rgba(0,0,0,0.2)] text-left transition-all duration-300">
+        <div className="mb-6 text-center">
+          <h2 className="text-2xl font-bold tracking-tight text-[#f2f3f5]">
+            Welcome back!
+          </h2>
+          <p className="mt-1 text-sm text-[#b5bac1]">
+            We're so excited to see you again!
+          </p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-[#b5bac1] flex gap-1">
+              Email <span className="text-[#f23f43]">*</span>
+            </label>
+            <Input
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="h-10 w-full rounded border-none bg-[#1e1f22] px-3 py-2 text-[14px] text-[#f2f3f5] transition-colors focus-visible:ring-1 focus-visible:ring-[#5865f2] placeholder:text-[#949ba4] focus-visible:border-none focus-visible:outline-none"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-[#b5bac1] flex gap-1">
+              Password <span className="text-[#f23f43]">*</span>
+            </label>
+            <Input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="h-10 w-full rounded border-none bg-[#1e1f22] px-3 py-2 text-[14px] text-[#f2f3f5] transition-colors focus-visible:ring-1 focus-visible:ring-[#5865f2] placeholder:text-[#949ba4] focus-visible:border-none focus-visible:outline-none"
+            />
             <button
               type="button"
-              className="font-semibold text-foreground underline-offset-4 hover:underline"
+              className="text-xs font-semibold text-[#00a8fc] hover:underline block"
+            >
+              Forgot your password?
+            </button>
+          </div>
+
+          {error && (
+            <div className="rounded border border-[#f23f43]/40 bg-[#f23f43]/10 p-2.5 text-xs text-[#f23f43]">
+              {error}
+            </div>
+          )}
+
+          <Button
+            type="submit"
+            disabled={loading}
+            className="h-11 w-full rounded bg-[#5865f2] font-semibold text-white hover:bg-[#4752c4] active:bg-[#3c45a5] transition-colors disabled:opacity-50 text-[14px]"
+          >
+            {loading ? "Logging in..." : "Log In"}
+          </Button>
+        </form>
+
+        <div className="mt-4 text-left">
+          <span className="text-xs text-[#949ba4]">
+            Need an account?{" "}
+            <button
+              type="button"
+              className="text-xs font-semibold text-[#00a8fc] hover:underline"
               onClick={onSwitchToRegister}
             >
-              Create an account
+              Register
             </button>
-          </p>
-        </CardFooter>
-      </Card>
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

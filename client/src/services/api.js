@@ -17,9 +17,13 @@ api.interceptors.request.use((config) => {
 });
 
 export const authAPI = {
-  register: (data) => {
-    console.log("[API] POST /api/users/register", data);
-    return api.post("/api/users/register", data);
+  sendOtp: (data) => {
+    console.log("[API] POST /api/users/register/send-otp", data);
+    return api.post("/api/users/register/send-otp", data);
+  },
+  verifyOtp: (data) => {
+    console.log("[API] POST /api/users/register/verify-otp", data);
+    return api.post("/api/users/register/verify-otp", data);
   },
   login: (data) => {
     console.log("[API] POST /api/users/login", data);
