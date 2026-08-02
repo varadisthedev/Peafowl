@@ -23,16 +23,3 @@ export const verifyToken = (req, res, next) => {
     return res.status(401).json({ message: "Invalid or expired token." });
   }
 };
-
-export const authorizeRoles = (...roles) => {
-  //..roles is a rest parameters which will collect every arg and store in roles[]
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      // checks for user role in req
-      return res
-        .status(403)
-        .json({ message: "Forbidden: Insufficient permissions." });
-    }
-    next();
-  };
-};

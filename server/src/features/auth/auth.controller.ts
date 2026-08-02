@@ -1,9 +1,9 @@
 import type { Request, Response, CookieOptions } from "express";
-import { prisma } from "../config/prisma.ts";
+import { prisma } from "../../config/prisma.ts";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { Prisma } from "../generated/prisma/client.ts";
+import { Prisma } from "../../generated/prisma/client.ts";
 
 // OTP + pending-user helpers
 import {
@@ -12,7 +12,7 @@ import {
   storePendingUser,
   getPendingUser,
   deletePendingUser,
-} from "../services/otpService.ts";
+} from "./auth.service.ts";
 
 dotenv.config();
 if (!process.env.NODE_ENV) {
@@ -26,15 +26,13 @@ const baseCookieOptions: CookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax",
+  // lax prevent CSRF attacks while still allowing the cookie to be sent on top-level navigation (like clicking a link)
+  // csrf means cross site request forgery 
 };
 
 const cookieOptions: CookieOptions = {
   ...baseCookieOptions,
-  maxAge: 60 * 60 * 1000,
-};
-
-export const TestRateLimit = async (req: Request, res: Response) => {
-  res.status(200).json({ message: "Rate limit test successful" });
+  maxAge: 60 * 60 * 1000, // 1 hour in milliseconds
 };
 
 /**
@@ -219,78 +217,5 @@ export const logout = (req: Request, res: Response) => {
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error during logout" });
-  }
-};
-
-export const getProfile = async (req: Request, res: Response) => {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.userId },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        role: true,
-        isLegacyAccount: true,
-        contactNumber: true,
-        avatar: true,
-        bio: true,
-        lastSeen: true,
-        status: true,
-        links: true,
-        profileQRCode: true,
-        accountRep: true,
-        banReason: true,
-        createdAt: true,
-        updatedAt: true,
-        // password deliberately excluded
-      },
-    });
-    if (!user) {
-      return res.status(404).json({ message: "User not found in db" });
-    }
-    res.status(200).json(user);
-  } catch (error: any) {
-    res.status(500).json({ message: "Server error", err: error.message });
-  }
-};
-
-export const updateMail = async (req: Request, res: Response) => {
-  try {
-    const { currentMail, newMail } = req.body as { currentMail?: string; newMail?: string };
-    if (!currentMail || !newMail) {
-      return res.status(400).json({ message: "currentMail and newMail are required" });
-    }
-
-    const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found in db" });
-    }
-    if (user.email !== currentMail) {
-      return res.status(400).json({ message: "currentMail does not match our records" });
-    }
-    if (currentMail === newMail) {
-      return res.status(400).json({ message: "newMail cannot be the same as currentMail" });
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newMail)) {
-      return res.status(400).json({ message: "newMail is not a valid email format" });
-    }
-
-    const emailTaken = await prisma.user.findUnique({ where: { email: newMail } });
-    if (emailTaken) {
-      return res.status(400).json({ message: "newMail already exists" });
-    }
-
-    const updated = await prisma.user.update({
-      where: { id: req.user.userId },
-      data: { email: newMail },
-    });
-
-    res.status(200).json(updated);
-  } catch (err: any) {
-    res.status(500).json({ message: "Server error", err: err.message });
   }
 };

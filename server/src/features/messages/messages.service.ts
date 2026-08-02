@@ -1,8 +1,8 @@
-import { prisma } from "../config/prisma.ts";
+import { prisma } from "../../config/prisma.ts";
 
 /**
  * Persist a new message to Postgres.
- * Called by the socket handler on every SEND_MESSAGE event.
+ * Called by chat.gateway.ts on every SEND_MESSAGE event.
  */
 export const saveMessage = async (messageData: {
   roomId: string;
@@ -19,7 +19,7 @@ export const saveMessage = async (messageData: {
     });
     return message;
   } catch (error) {
-    console.error("[MessageService] Error saving message:", error);
+    console.error("[MessagesService] Error saving message:", error);
     throw error;
   }
 };
@@ -41,7 +41,7 @@ export const getMessagesByRoom = async (
     });
     return messages.reverse(); // return oldest-first for display
   } catch (error) {
-    console.error("[MessageService] Error fetching messages:", error);
+    console.error("[MessagesService] Error fetching messages:", error);
     throw error;
   }
 };

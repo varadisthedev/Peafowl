@@ -1,0 +1,161 @@
+/**
+ * Chat event subscriber — Redis Streams.
+ *
+ * Reads from the Redis Stream via blocking XREAD and fans out events to
+ * local Socket.IO clients. This enables horizontal scaling: every server
+ * instance reads from the same stream and broadcasts to its own sockets.
+ *
+ * Uses a dedicated ioredis duplicate so the blocking XREAD call doesn't
+ * block other Redis operations on the shared client.
+ */
+
+import type { Server as SocketServer } from "socket.io";
+import chalk from "chalk";
+import redisClient from "../config/redis.ts";
+import { CHAT_STREAM_KEY, SOCKET_EMIT_EVENTS, type ChatStreamEvent } from "./types.ts";
+
+const log = console.log;
+
+/** Parse raw stream fields into a ChatStreamEvent. */
+function parseStreamEntry(fields: string[]): ChatStreamEvent | null {
+  try {
+    // ioredis returns fields as a flat [key, value, key, value, ...] array
+    const map: Record<string, string> = {};
+    for (let i = 0; i < fields.length; i += 2) {
+      map[fields[i]] = fields[i + 1];
+    }
+
+    const { type, roomId, originSocketId, publishedAt, data } = map;
+    if (!type || !roomId || !data) {
+      log(chalk.yellow("[ChatSubscriber] Ignoring malformed stream entry"));
+      return null;
+    }
+
+    return {
+      type: type as ChatStreamEvent["type"],
+      roomId,
+      originSocketId: originSocketId || undefined,
+      publishedAt,
+      payload: JSON.parse(data),
+    };
+  } catch {
+    log(chalk.yellow("[ChatSubscriber] Failed to parse stream entry"));
+    return null;
+  }
+}
+
+/** Broadcast a parsed chat event to the appropriate Socket.IO room. */
+function broadcastToRoom(io: SocketServer, event: ChatStreamEvent): void {
+  const { type, roomId, payload, originSocketId } = event;
+
+  switch (type) {
+    case "receive_message":
+      io.to(roomId).emit(SOCKET_EMIT_EVENTS.RECEIVE_MESSAGE, payload);
+      break;
+
+    case "typing_status":
+      if (originSocketId) {
+        io.to(roomId).except(originSocketId).emit(SOCKET_EMIT_EVENTS.TYPING_STATUS, payload);
+      } else {
+        io.to(roomId).emit(SOCKET_EMIT_EVENTS.TYPING_STATUS, payload);
+      }
+      break;
+
+    case "user_joined":
+      io.to(roomId).emit(SOCKET_EMIT_EVENTS.USER_JOINED, payload);
+      break;
+
+    case "user_left":
+      io.to(roomId).emit(SOCKET_EMIT_EVENTS.USER_LEFT, payload);
+      break;
+
+    default:
+      log(chalk.yellow(`[ChatSubscriber] Unknown event type: ${type}`));
+  }
+}
+
+let readerClient: ReturnType<typeof redisClient.duplicate> | null = null;
+let isReading = false;
+
+/**
+ * Start reading from the Redis Stream and wire events to Socket.IO.
+ * Reads only new entries (starting from `$` — current time).
+ * Safe to call once at server startup.
+ */
+export async function initChatSubscriber(io: SocketServer): Promise<boolean> {
+  if (isReading) {
+    log(chalk.yellow("[ChatSubscriber] Already reading stream, skipping"));
+    return true;
+  }
+
+  try {
+    // Verify stream is reachable before starting the loop
+    await redisClient.xlen(CHAT_STREAM_KEY).catch(() => 0);
+
+    readerClient = redisClient.duplicate();
+    readerClient.on("error", (err) => {
+      log(chalk.red("[ChatSubscriber] Reader error:"), err.message);
+    });
+
+    isReading = true;
+    log(chalk.green(`[ChatSubscriber] Listening on stream "${CHAT_STREAM_KEY}"`));
+
+    // Run the read loop without awaiting — it runs for the process lifetime
+    void readLoop(io);
+    return true;
+  } catch (error) {
+    log(
+      chalk.yellow(
+        "[ChatSubscriber] Could not connect to Redis stream — chat will use local socket fallback:",
+      ),
+      error instanceof Error ? error.message : error,
+    );
+    return false;
+  }
+}
+
+/**
+ * Blocking XREAD loop. Reads new entries as they arrive, then loops.
+ * `$` as the initial ID means we only process events published after startup.
+ */
+async function readLoop(io: SocketServer): Promise<void> {
+  // Start from the latest entry — ignore history
+  let lastId = "$";
+
+  while (isReading && readerClient) {
+    try {
+      // Block up to 5 s waiting for new entries; returns null on timeout
+      const results = await readerClient.xread(
+        "COUNT", 10,
+        "BLOCK", 5000,
+        "STREAMS", CHAT_STREAM_KEY, lastId,
+      );
+
+      if (!results) continue; // timeout — loop again
+
+      for (const [, entries] of results as [string, [string, string[]][]][]) {
+        for (const [id, fields] of entries) {
+          lastId = id; // advance cursor
+
+          const event = parseStreamEntry(fields);
+          if (event) broadcastToRoom(io, event);
+        }
+      }
+    } catch (error) {
+      if (!isReading) break; // shutting down — expected
+      log(chalk.red("[ChatSubscriber] XREAD error:"), (error as Error).message);
+      // Brief pause before retrying to avoid tight error loops
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+  }
+}
+
+/** Stop the read loop and release the dedicated reader connection. */
+export async function stopChatSubscriber(): Promise<void> {
+  isReading = false;
+  if (readerClient) {
+    await readerClient.quit();
+    readerClient = null;
+  }
+  log(chalk.yellow("[ChatSubscriber] Stopped"));
+}

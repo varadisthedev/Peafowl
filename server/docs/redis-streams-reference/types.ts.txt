@@ -1,13 +1,12 @@
 /**
- * Chat pub/sub event types and payloads.
+ * Chat stream event types and payloads.
  *
- * All chat real-time events flow through Redis on a single channel.
- * Each message is a JSON-serialized ChatPubSubEvent.
+ * All chat real-time events flow through a single Redis Stream.
+ * Each entry is a flat hash of fields; the event payload is JSON-serialized
+ * into a single `data` field alongside a `type` field.
  */
 
-// types prevents any bugs from importing the wrong Redis client type (e.g. ioredis vs node-redis).
-
-export const CHAT_PUBSUB_CHANNEL = "peafowl:chat:events";
+export const CHAT_STREAM_KEY = "peafowl:chat:events";
 
 /** Discriminated union of every chat event that can be published. */
 export type ChatEventType =
@@ -16,7 +15,7 @@ export type ChatEventType =
   | "user_joined"
   | "user_left";
 
-export interface ChatPubSubEvent<T = unknown> {
+export interface ChatStreamEvent<T = unknown> {
   /** Event kind — maps to the Socket.IO emit name on the client. */
   type: ChatEventType;
   /** Target chat room. */

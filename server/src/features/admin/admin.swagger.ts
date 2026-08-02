@@ -1,4 +1,4 @@
-import { responses } from "../components/responses.ts";
+import { responses } from "../../swagger/components/responses.ts";
 
 export const adminPaths = {
   "/api/admin/createAccount": {
@@ -6,7 +6,8 @@ export const adminPaths = {
       tags: ["Admin"],
       summary: "Create admin account",
       description:
-        "**Public endpoint** — creates a user with `admin` role. Consider protecting this in production.",
+        "Creates a user with `admin` role. Requires an existing admin's JWT — the first admin is bootstrapped via `npm run db:seed-admin`, not this route.",
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       requestBody: {
         required: true,
         content: {
@@ -31,6 +32,8 @@ export const adminPaths = {
           },
         },
         "400": responses.BadRequest,
+        "401": responses.Unauthorized,
+        "403": responses.Forbidden,
         "500": responses.ServerError,
       },
     },
@@ -76,8 +79,8 @@ export const adminPaths = {
           name: "id",
           in: "path",
           required: true,
-          schema: { type: "string" },
-          description: "MongoDB user ObjectId",
+          schema: { type: "integer" },
+          description: "Numeric user id",
         },
       ],
       responses: {
@@ -111,7 +114,7 @@ export const adminPaths = {
           name: "id",
           in: "path",
           required: true,
-          schema: { type: "string" },
+          schema: { type: "integer" },
         },
       ],
       responses: {
@@ -146,7 +149,7 @@ export const adminPaths = {
           name: "id",
           in: "path",
           required: true,
-          schema: { type: "string" },
+          schema: { type: "integer" },
         },
       ],
       requestBody: {
@@ -186,7 +189,7 @@ export const adminPaths = {
           name: "id",
           in: "path",
           required: true,
-          schema: { type: "string" },
+          schema: { type: "integer" },
         },
       ],
       requestBody: {

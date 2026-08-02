@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import redis from "../config/redis.ts";
+import redis from "../../config/redis.ts";
 import crypto from "crypto";
 
 const ResendKey = process.env.RESEND_API_KEY;
@@ -19,7 +19,7 @@ const hashOtp = (otp: string): string =>
 
 // ─── Pending-user storage ────────────────────────────────────────────────────
 // During the 2-step registration flow we keep the validated user payload in
-// Redis (TTL = OTP expiry) so we never touch MongoDB until OTP is confirmed.
+// Redis (TTL = OTP expiry) so we never touch Postgres until OTP is confirmed.
 
 interface PendingUser {
     username: string;
@@ -45,6 +45,8 @@ export const getPendingUser = async (email: string): Promise<PendingUser | null>
 export const deletePendingUser = async (email: string): Promise<void> => {
     await redis.del(`pending_user:${email}`);
 };
+
+
 
 // ─── OTP send ────────────────────────────────────────────────────────────────
 

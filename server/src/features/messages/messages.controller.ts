@@ -1,30 +1,6 @@
 import type { Request, Response } from "express";
-import { prisma } from "../config/prisma.ts";
-import { Prisma } from "../generated/prisma/client.ts";
-
-// ─── Internal save helper (used by messageService + socket) ──────────────────
-
-export const saveMessage = async (messageData: {
-  roomId: string;
-  senderId: number;
-  content: string;
-}) => {
-  try {
-    const message = await prisma.message.create({
-      data: {
-        roomId: messageData.roomId,
-        senderId: messageData.senderId,
-        content: messageData.content,
-      },
-    });
-    return message;
-  } catch (error) {
-    console.error("[MessageController] Error saving message:", error);
-    throw error;
-  }
-};
-
-// ─── HTTP handlers ────────────────────────────────────────────────────────────
+import { prisma } from "../../config/prisma.ts";
+import { Prisma } from "../../generated/prisma/client.ts";
 
 export const getMessagesByRoom = async (req: Request, res: Response) => {
   try {
@@ -42,13 +18,26 @@ export const getMessagesByRoom = async (req: Request, res: Response) => {
       prisma.message.count({ where: { roomId } }),
     ]);
 
+    // Match the shape chat.gateway.ts emits for live messages (_id/sender
+    // instead of Prisma's id/senderId) so the client can treat history and
+    // realtime messages identically.
+    const shaped = messages.reverse().map((m) => ({
+      _id: m.id,
+      roomId: m.roomId,
+      sender: m.senderId,
+      content: m.content,
+      timestamp: m.timestamp,
+      isEdited: m.isEdited,
+      isPinned: m.isPinned,
+    }));
+
     return res.status(200).json({
       success: true,
-      messages: messages.reverse(), // oldest-first for display
+      messages: shaped, // oldest-first for display
       totalCount,
     });
   } catch (error: any) {
-    console.error("[MessageController] Error fetching messages:", error);
+    console.error("[MessagesController] Error fetching messages:", error);
     return res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -82,7 +71,7 @@ export const deleteMessage = async (req: Request, res: Response) => {
       message: "Message deleted successfully",
     });
   } catch (error: any) {
-    console.error("[MessageController] Error deleting message:", error);
+    console.error("[MessagesController] Error deleting message:", error);
     return res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -112,13 +101,21 @@ export const editMessage = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      message: updatedMessage,
+      message: {
+        _id: updatedMessage.id,
+        roomId: updatedMessage.roomId,
+        sender: updatedMessage.senderId,
+        content: updatedMessage.content,
+        timestamp: updatedMessage.timestamp,
+        isEdited: updatedMessage.isEdited,
+        isPinned: updatedMessage.isPinned,
+      },
     });
   } catch (error: any) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
       return res.status(404).json({ success: false, message: "Message not found" });
     }
-    console.error("[MessageController] Error editing message:", error);
+    console.error("[MessagesController] Error editing message:", error);
     return res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -162,7 +159,7 @@ export const pinMessage = async (req: Request, res: Response) => {
       pinnedMessage,
     });
   } catch (error: any) {
-    console.error("[MessageController] Error pinning message:", error);
+    console.error("[MessagesController] Error pinning message:", error);
     return res.status(500).json({ success: false, error: error.message });
   }
 };

@@ -1,10 +1,11 @@
 import { schemas } from "./components/schemas.ts";
 import { responses } from "./components/responses.ts";
 import { securitySchemes } from "./components/security.ts";
-import { userPaths } from "./paths/users.ts";
-import { messagePaths } from "./paths/messages.ts";
-import { adminPaths } from "./paths/admin.ts";
-import { socketPaths } from "./paths/socket.ts";
+import { authPaths } from "../features/auth/auth.swagger.ts";
+import { userPaths } from "../features/users/users.swagger.ts";
+import { messagePaths } from "../features/messages/messages.swagger.ts";
+import { adminPaths } from "../features/admin/admin.swagger.ts";
+import { socketPaths } from "../features/chat/chat.swagger.ts";
 
 /**
  * Assembled OpenAPI 3.0 specification for the Peafowl API.
@@ -16,7 +17,7 @@ export const openApiSpec = {
     title: "Peafowl API",
     version: "1.0.0",
     description: `
-Real-time chat application API built with **Express 5**, **Socket.IO**, **MongoDB**, and **Redis**.
+Real-time chat application API built with **Express 5**, **Socket.IO**, **PostgreSQL** (via Prisma), and **Redis**.
 
 ## Authentication
 - Register or login to receive a JWT.
@@ -30,13 +31,16 @@ All \`/api/*\` routes are rate-limited via Redis sliding-window: **100 requests 
 ## Real-time Chat (Socket.IO)
 Connect to the same origin as the HTTP server (default \`http://localhost:3000\`).
 
-Chat events are distributed across server instances using **Redis pub/sub** on channel \`peafowl:chat:events\`.
+Chat events are broadcast directly to Socket.IO rooms on the single server
+instance — no message bus involved. See \`server/docs/chat-scaling.md\` for the
+reasoning and the documented path to a Redis Streams-based fanout if the app
+ever needs to run multiple server instances.
 
 | Direction | Event | Description |
 |-----------|-------|-------------|
 | C→S | \`join_room\` | Join a room |
 | C→S | \`leave_room\` | Leave a room |
-| C→S | \`send_message\` | Send message (saved to MongoDB) |
+| C→S | \`send_message\` | Send message (saved to Postgres) |
 | C→S | \`typing\` | Emit typing on/off for a room |
 | S→C | \`receive_message\` | New message broadcast |
 | S→C | \`typing_status\` | Typing indicator for room members |
@@ -97,6 +101,7 @@ See the **Socket.IO** tag below for detailed payload schemas.
         },
       },
     },
+    ...authPaths,
     ...userPaths,
     ...messagePaths,
     ...adminPaths,

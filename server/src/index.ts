@@ -8,14 +8,12 @@ import http from "http";
 import { Server } from "socket.io";
 
 import router from "./routes/index.ts";
-import setupSocket from "./services/socket.ts";
+import setupSocket from "./features/chat/chat.gateway.ts";
 import { setupSwagger } from "./swagger/index.ts";
-import { initChatSubscriber } from "./pubsub/index.ts";
 
-// adding redis rate limit 
-import RedisRateLimiter from "./middleware/redisRateLimiter.ts";
-import { logger } from "./middleware/customLogger.ts";
-import { execSync } from "child_process"
+// adding redis rate limit
+import RedisRateLimiter from "./middleware/rateLimiter.ts";
+import { logger } from "./middleware/requestLogger.ts";
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -60,13 +58,8 @@ setupSwagger(app);
 // routes
 app.use(router);
 
-// Redis pub/sub: subscribe before socket handlers so broadcasts are ready
-const pubSubReady = await initChatSubscriber(io);
-if (!pubSubReady) {
-  log(chalk.yellow("[Server] Running without Redis pub/sub — using local socket fallback"));
-}
-
-// initialize socket handlers (publish events via Redis pub/sub)
+// initialize socket handlers — chat events broadcast directly via Socket.IO,
+// no message bus involved (see server/docs/chat-scaling.md)
 setupSocket(io);
 
 // start server (using http server so Socket.IO attaches correctly)

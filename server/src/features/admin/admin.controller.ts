@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { prisma } from "../config/prisma.ts";
-import { Prisma, Role } from "../generated/prisma/client.ts";
+import { prisma } from "../../config/prisma.ts";
+import { Prisma, Role } from "../../generated/prisma/client.ts";
 import bcrypt from "bcrypt";
 
 export const getAllUsers = async (req: Request, res: Response) => {

@@ -11,7 +11,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio --port 5555 --browser none"
+    "db:studio": "prisma studio --port 5555 --browser none",
+    "db:seed-admin": "tsx prisma/seed.ts"
   },
   "keywords": [],
   "author": "",
@@ -26,18 +27,12 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.5.2",
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
-    "morgan": "^1.10.1",
-    "multer": "^2.1.1",
     "pg": "^8.22.0",
-    "rate-limit-redis": "^5.0.0",
-    "redis": "^5.12.1",
     "resend": "^6.12.4",
     "socket.io": "^4.8.3",
-    "swagger-ui-express": "^5.0.1",
-    "winston": "^3.19.0"
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
@@ -48,7 +43,6 @@
     "@types/swagger-ui-express": "^4.1.8",
     "nodemon": "^3.1.14",
     "prisma": "^7.8.0",
-    "ts-node": "^10.9.2",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }

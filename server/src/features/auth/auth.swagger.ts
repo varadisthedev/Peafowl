@@ -1,6 +1,6 @@
-import { responses } from "../components/responses.ts";
+import { responses } from "../../swagger/components/responses.ts";
 
-export const userPaths = {
+export const authPaths = {
   "/api/users/register/send-otp": {
     post: {
       tags: ["Users"],
@@ -122,78 +122,26 @@ export const userPaths = {
     },
   },
 
-  "/api/users/profile": {
-    get: {
+  "/api/users/logout": {
+    post: {
       tags: ["Users"],
-      summary: "Get current user profile",
-      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      summary: "Logout",
+      description: "Clears the httpOnly `token` auth cookie.",
       responses: {
         "200": {
-          description: "Profile retrieved",
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/User" },
-            },
-          },
-        },
-        "401": responses.Unauthorized,
-        "404": responses.NotFound,
-        "500": responses.ServerError,
-      },
-    },
-  },
-
-  "/api/users/mailUpdate": {
-    put: {
-      tags: ["Users"],
-      summary: "Update email address",
-      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
-      requestBody: {
-        required: true,
-        content: {
-          "application/json": {
-            schema: { $ref: "#/components/schemas/UpdateMailRequest" },
-          },
-        },
-      },
-      responses: {
-        "200": {
-          description: "Email updated",
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/User" },
-            },
-          },
-        },
-        "400": responses.BadRequest,
-        "401": responses.Unauthorized,
-        "404": responses.NotFound,
-        "500": responses.ServerError,
-      },
-    },
-  },
-
-  "/api/users/testRateLimit": {
-    get: {
-      tags: ["Users"],
-      summary: "Rate limit test endpoint",
-      description:
-        "Public endpoint for verifying the Redis sliding-window rate limiter (`100 req / 15 min` per IP on `/api/*`).",
-      responses: {
-        "200": {
-          description: "Request allowed",
+          description: "Logged out",
           content: {
             "application/json": {
               schema: {
                 type: "object",
                 properties: {
-                  message: { type: "string", example: "Rate limit test successful" },
+                  message: { type: "string", example: "Logged out successfully" },
                 },
               },
             },
           },
         },
-        "429": responses.RateLimited,
+        "500": responses.ServerError,
       },
     },
   },

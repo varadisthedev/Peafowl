@@ -1,4 +1,4 @@
-import { responses } from "../components/responses.ts";
+import { responses } from "../../swagger/components/responses.ts";
 
 export const messagePaths = {
   "/api/messages/room/{roomId}": {
@@ -55,8 +55,8 @@ export const messagePaths = {
           name: "messageId",
           in: "path",
           required: true,
-          schema: { type: "string" },
-          description: "MongoDB message ObjectId",
+          schema: { type: "integer" },
+          description: "Numeric message id",
         },
       ],
       requestBody: {
@@ -98,7 +98,7 @@ export const messagePaths = {
           name: "messageId",
           in: "path",
           required: true,
-          schema: { type: "string" },
+          schema: { type: "integer" },
         },
       ],
       responses: {
@@ -135,7 +135,7 @@ export const messagePaths = {
           name: "messageId",
           in: "path",
           required: true,
-          schema: { type: "string" },
+          schema: { type: "integer" },
         },
       ],
       responses: {

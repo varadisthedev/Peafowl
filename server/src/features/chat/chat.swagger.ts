@@ -9,7 +9,7 @@ export const socketPaths = {
       tags: ["Socket.IO"],
       summary: "[Socket] join_room — Client → Server",
       description:
-        "Join a chat room. Server adds the socket to the Socket.IO room and publishes a `user_joined` event via Redis pub/sub.",
+        "Join a chat room. Server adds the socket to the Socket.IO room and broadcasts a `user_joined` event to the room.",
       requestBody: {
         required: true,
         content: {
@@ -31,7 +31,7 @@ export const socketPaths = {
       tags: ["Socket.IO"],
       summary: "[Socket] leave_room — Client → Server",
       description:
-        "Leave a chat room. Clears typing state and broadcasts `user_left` via Redis pub/sub.",
+        "Leave a chat room. Clears typing state and broadcasts `user_left` to the room.",
       requestBody: {
         required: true,
         content: {
@@ -51,7 +51,7 @@ export const socketPaths = {
       tags: ["Socket.IO"],
       summary: "[Socket] send_message — Client → Server",
       description:
-        "Send a chat message. Persisted to MongoDB, then broadcast as `receive_message` through Redis pub/sub to all server instances.",
+        "Send a chat message. Persisted to Postgres, then broadcast as `receive_message` to all clients in the room.",
       requestBody: {
         required: true,
         content: {
@@ -71,7 +71,7 @@ export const socketPaths = {
       tags: ["Socket.IO"],
       summary: "[Socket] typing — Client → Server",
       description:
-        "Emit typing status for a room. Server publishes `typing_status` to other clients in the room (not persisted).",
+        "Emit typing status for a room. Server broadcasts `typing_status` to other clients in the room (not persisted).",
       requestBody: {
         required: true,
         content: {

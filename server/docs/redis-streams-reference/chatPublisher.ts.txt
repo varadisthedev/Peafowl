@@ -1,34 +1,36 @@
 /**
- * Chat event publisher.
+ * Chat event publisher — Redis Streams.
  *
- * Publishes chat events to the Redis `peafowl:chat:events` channel.
+ * Publishes chat events to the Redis Stream `peafowl:chat:events` via XADD.
  * Socket handlers call this instead of broadcasting directly, so every
- * server instance receives the event and fans it out to its local clients.
+ * server instance can read and fan out the event to its local clients.
  */
 
 import chalk from "chalk";
-import { getRedisPubSubClients } from "./redisClients.ts";
-import { CHAT_PUBSUB_CHANNEL, type ChatPubSubEvent } from "./types.ts";
+import redisClient from "../config/redis.ts";
+import { CHAT_STREAM_KEY, type ChatStreamEvent } from "./types.ts";
 
 const log = console.log;
 
 export class ChatPublisher {
   /**
-   * Serialize and publish a chat event to Redis.
-   * Failures are logged but do not throw — chat should degrade gracefully
-   * if Redis is temporarily unavailable.
+   * Serialize and append a chat event to the Redis Stream.
+   * Uses `*` for auto-generated stream IDs.
+   * Failures are logged but do not throw — chat degrades gracefully.
    */
-  async publish<T>(event: ChatPubSubEvent<T>): Promise<boolean> {
+  async publish<T>(event: ChatStreamEvent<T>): Promise<boolean> {
     try {
-      const { publisher } = getRedisPubSubClients();
-      const serialized = JSON.stringify(event);
-      const receivers = await publisher.publish(CHAT_PUBSUB_CHANNEL, serialized);
-
-      log(
-        chalk.blue(
-          `[ChatPublisher] ${event.type} → room:${event.roomId} (${receivers} subscriber(s))`,
-        ),
+      const id = await redisClient.xadd(
+        CHAT_STREAM_KEY,
+        "*",
+        "type", event.type,
+        "roomId", event.roomId,
+        "originSocketId", event.originSocketId ?? "",
+        "publishedAt", event.publishedAt,
+        "data", JSON.stringify(event.payload),
       );
+
+      log(chalk.blue(`[ChatPublisher] ${event.type} → room:${event.roomId} (id: ${id})`));
       return true;
     } catch (error) {
       log(chalk.red("[ChatPublisher] Failed to publish:"), error);
@@ -39,7 +41,7 @@ export class ChatPublisher {
   /** Convenience builder for receive_message events. */
   async publishMessage(
     roomId: string,
-    payload: ChatPubSubEvent["payload"],
+    payload: ChatStreamEvent["payload"],
     originSocketId?: string,
   ): Promise<boolean> {
     return this.publish({
