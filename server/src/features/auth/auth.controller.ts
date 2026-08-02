@@ -2,7 +2,7 @@ import type { Request, Response, CookieOptions } from "express";
 import { prisma } from "../../config/prisma.ts";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
+import { env } from "../../config/env.ts";
 import { Prisma } from "../../generated/prisma/client.ts";
 
 // OTP + pending-user helpers
@@ -14,17 +14,11 @@ import {
   deletePendingUser,
 } from "./auth.service.ts";
 
-dotenv.config();
-if (!process.env.NODE_ENV) {
-  console.warn("NODE_ENV not set, defaulting to 'development'");
-  process.env.NODE_ENV = "development";
-}
-
 // Cookie settings for JWT auth for register route and login route,
 //  also used in logout route to clear cookie
 const baseCookieOptions: CookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure: env.IS_PRODUCTION,
   sameSite: "lax",
   // lax prevent CSRF attacks while still allowing the cookie to be sent on top-level navigation (like clicking a link)
   // csrf means cross site request forgery 
@@ -193,7 +187,7 @@ export const login = async (req: Request, res: Response) => {
     // generate JWT token
     const token = jwt.sign(
       { userId: user.id, role: user.role },
-      process.env.JWT_SECRET,
+      env.JWT_SECRET,
       {
         expiresIn: "1h",
       },

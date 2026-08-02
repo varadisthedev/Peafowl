@@ -1,20 +1,13 @@
 // Singleton Prisma client — import this everywhere instead of creating new instances
 import { PrismaClient } from "../generated/prisma/client.ts";
 import { PrismaPg } from "@prisma/adapter-pg";
-import dotenv from "dotenv";
 import chalk from "chalk";
-// may remove dotenv entirely as node 18+ supports .env files natively, but for now keeping it for compatibility with older versions of node and for clarity
-dotenv.config();
+import { env } from "./env.ts";
 // this file exports a named export as well as a default export for convenience, so you can import it like:
 // import { prisma } from "./config/prisma.ts";
 // or
 // import prisma from "./config/prisma.ts";
 const log = console.log;
-
-if (!process.env.DATABASE_URL) {
-  console.error(chalk.red("[Postgres] DATABASE_URL is not defined in environment variables"));
-  process.exit(1);
-}
 
 // Prevent multiple instances during hot-reload in development
 // part of singleton design pattern to avoid exhausting database connections
@@ -25,7 +18,7 @@ const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
  * Instead, a driver adapter must be provided. We use @prisma/adapter-pg (backed by pg.Pool).
  */
 function createPrismaClient(): PrismaClient {
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+  const adapter = new PrismaPg({ connectionString: env.DATABASE_URL });
   return new PrismaClient({
     adapter,
     log: ["error", "warn"],
@@ -35,7 +28,7 @@ function createPrismaClient(): PrismaClient {
 export const prisma: PrismaClient =
   globalForPrisma.prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== "production") {
+if (!env.IS_PRODUCTION) {
   globalForPrisma.prisma = prisma;
 }
 

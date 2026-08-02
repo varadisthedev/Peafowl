@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+import { env } from "./config/env.ts";
 import { connectPrisma } from "./config/prisma.ts";
 import cookieParser from "cookie-parser";
 import chalk from "chalk";
@@ -14,9 +14,8 @@ import { setupSwagger } from "./swagger/index.ts";
 // adding redis rate limit
 import RedisRateLimiter from "./middleware/rateLimiter.ts";
 import { logger } from "./middleware/requestLogger.ts";
-dotenv.config();
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = env.PORT;
 const log = console.log;
 
 // to allow express to trust the proxy (like nginx, railway ,render)
@@ -26,7 +25,7 @@ app.set("trust proxy", true);
 const server = http.createServer(app); // wrapping express app in http server for Socket.io
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL,
+    origin: env.CLIENT_URL,
     credentials: true,
   },
 });
@@ -41,12 +40,9 @@ app.set("trust proxy", true);
 const apiLimiter = RedisRateLimiter({ windowMs: 15 * 60 * 1000, max: 100 });
 app.use("/api", apiLimiter);
 
-if (!process.env.CLIENT_URL || process.env.CLIENT_URL.endsWith("/")) {
-  throw new Error("add CLIENT_URL in env without the trailing slash")
-}
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: env.CLIENT_URL,
     credentials: true,
   }),
 );
@@ -66,7 +62,7 @@ setupSocket(io);
 server.listen(PORT, () => {
   console.clear();
   console.log("=================================");
-  if (process.env.NODE_ENV === "development") {
+  if (env.NODE_ENV === "development") {
 
     log(chalk.blue(`[Server: DEV] running on: http://localhost:${PORT}/`));
     log(chalk.blue(`[Server: DEV] API docs: http://localhost:${PORT}/api-docs`));

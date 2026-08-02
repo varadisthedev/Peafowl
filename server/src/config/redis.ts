@@ -1,23 +1,12 @@
 // redis connections are expensive, so we create a single shared instance
 // that can be imported and used across the app
 import Redis from "ioredis";
-import dotenv from "dotenv";
 import chalk from "chalk";
+import { env } from "./env.ts";
 
 const log = console.log;
 
-dotenv.config();
-
-if (!process.env.REDIS_URL) {
-  log(
-    chalk.yellow(
-      "REDIS_URL not set in .env, defaulting to 'redis://localhost:6379'",
-    ),
-  );
-  process.env.REDIS_URL = "redis://localhost:6379";
-}
-
-const redisClient = new Redis(process.env.REDIS_URL, {
+const redisClient = new Redis(env.REDIS_URL, {
   // If Redis is down, don't crash the app just log and move on
   lazyConnect: false, // connects to redis after 1st request only 
 

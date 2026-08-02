@@ -1,12 +1,9 @@
 import { Resend } from "resend";
 import redis from "../../config/redis.ts";
 import crypto from "crypto";
+import { env } from "../../config/env.ts";
 
-const ResendKey = process.env.RESEND_API_KEY;
-if (!ResendKey) {
-    throw new Error("Resend API key is not defined in environment variables");
-}
-const resend = new Resend(ResendKey);
+const resend = new Resend(env.RESEND_API_KEY);
 
 const OTP_TTL = 420;           // 7 minutes (seconds)
 const MAX_OTP_ATTEMPTS = 5;    // max wrong guesses before lockout
@@ -62,7 +59,7 @@ export const sendOtp = async (userMail: string) => {
         await redis.del(`otp_attempts:${userMail}`);
 
         await resend.emails.send({
-            from: process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev",
+            from: env.RESEND_FROM_EMAIL,
             to: userMail,
             subject: "Your Peafowl verification code",
             html: `
