@@ -35,7 +35,7 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
       console.log("[Login] Profile data:", profileRes.data);
 
       onLoginSuccess({
-        userId: profileRes.data._id,
+        userId: profileRes.data.id,
         username: profileRes.data.username,
         email: profileRes.data.email,
       });
